@@ -1,313 +1,473 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Indoor Navigation - VRGT System</title>
-    <meta name="description" content="Interactive indoor route guidance with real-time directions">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indoor Map — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Navigation</small></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Indoor Navigation</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map" class="active"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🗺 Indoor Route Guidance</h1>
+      <div class="header-actions">
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">N</div>
+          <span class="user-name">Navigator</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map" class="active"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <header class="top-header">
-            <h1>🗺 Indoor Route Guidance</h1>
-            <div class="header-actions">
-                <span class="header-time" id="headerTime"></span>
-                <div class="notification-bell" onclick="window.location.href='/notifications'">🔔<span class="count" style="display:none">0</span></div>
-                <div class="user-avatar">N</div>
-            </div>
-        </header>
+    <div class="page-content">
 
-        <div class="page-content">
-            <!-- Route Selection -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3>🧭 Route Configuration</h3>
-                </div>
-                <div class="grid-3">
-                    <div class="form-group">
-                        <label>Select Visitor</label>
-                        <select id="visitorSelect" class="form-control" onchange="loadVisitorRoute()">
-                            <option value="">Select a visitor...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Destination Room</label>
-                        <select id="roomSelect" class="form-control">
-                            <option value="">Auto-detect from assignment</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <div class="flex gap-2">
-                            <button class="btn btn-primary" onclick="showRoute()">🗺 Show Route</button>
-                            <button class="btn btn-outline" onclick="toggleVoice()">🔊 Voice Nav</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Interactive Map -->
-            <div class="grid-2-1">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🏢 Interactive Floor Map</h3>
-                        <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm active" onclick="switchFloor('1')">Floor 1</button>
-                            <button class="btn btn-outline btn-sm" onclick="switchFloor('2')">Floor 2</button>
-                            <button class="btn btn-outline btn-sm" onclick="switchFloor('3')">Floor 3</button>
-                        </div>
-                    </div>
-                    <div class="map-svg-wrapper">
-                        <svg viewBox="0 0 800 500" id="navigationMap">
-                            <!-- Building Structure -->
-                            <defs>
-                                <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.8"/>
-                                    <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.8"/>
-                                </linearGradient>
-                                <filter id="glow">
-                                    <feGaussianBlur stdDeviation="3" result="blur"/>
-                                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                                </filter>
-                            </defs>
-
-                            <!-- Floor background -->
-                            <rect x="20" y="20" width="760" height="460" rx="10" fill="rgba(30,30,72,0.5)" stroke="rgba(99,102,241,0.15)" stroke-width="1"/>
-
-                            <!-- Gate Area -->
-                            <rect x="30" y="200" width="90" height="80" rx="8" fill="rgba(59,130,246,0.12)" stroke="rgba(59,130,246,0.4)" stroke-width="2"/>
-                            <text x="75" y="235" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="700">🚧 GATE</text>
-                            <text x="75" y="255" text-anchor="middle" fill="#94a3b8" font-size="9">Start Point</text>
-                            <circle cx="75" cy="240" r="3" fill="#3b82f6" id="gatePoint"/>
-
-                            <!-- Reception -->
-                            <rect x="220" y="180" width="120" height="100" rx="8" fill="rgba(245,158,11,0.1)" stroke="rgba(245,158,11,0.4)" stroke-width="2"/>
-                            <text x="280" y="225" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">🛎 RECEPTION</text>
-                            <text x="280" y="245" text-anchor="middle" fill="#94a3b8" font-size="9">Check-in</text>
-                            <circle cx="280" cy="230" r="3" fill="#f59e0b" id="receptionPoint"/>
-
-                            <!-- Elevator/Stairs -->
-                            <rect x="420" y="200" width="50" height="60" rx="6" fill="rgba(168,85,247,0.1)" stroke="rgba(168,85,247,0.3)" stroke-width="1"/>
-                            <text x="445" y="235" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">🛗</text>
-
-                            <!-- Meeting Rooms -->
-                            <rect x="530" y="60" width="120" height="80" rx="8" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.4)" stroke-width="2"/>
-                            <text x="590" y="95" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">MR-101</text>
-                            <text x="590" y="115" text-anchor="middle" fill="#94a3b8" font-size="9">Lotus (6 seats)</text>
-
-                            <rect x="530" y="160" width="120" height="80" rx="8" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.4)" stroke-width="2"/>
-                            <text x="590" y="195" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">MR-102</text>
-                            <text x="590" y="215" text-anchor="middle" fill="#94a3b8" font-size="9">Orchid (4 seats)</text>
-
-                            <rect x="530" y="260" width="120" height="80" rx="8" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.4)" stroke-width="2"/>
-                            <text x="590" y="295" text-anchor="middle" fill="#34d399" font-size="11" font-weight="700">MR-103</text>
-                            <text x="590" y="315" text-anchor="middle" fill="#94a3b8" font-size="9">Jasmine (8 seats)</text>
-
-                            <rect x="670" y="60" width="100" height="80" rx="8" fill="rgba(6,182,212,0.1)" stroke="rgba(6,182,212,0.3)" stroke-width="2"/>
-                            <text x="720" y="95" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700">MR-201</text>
-                            <text x="720" y="115" text-anchor="middle" fill="#94a3b8" font-size="9">Tulip (10 seats)</text>
-
-                            <!-- Navigation Path (animated) -->
-                            <g id="routePath" style="display:none;">
-                                <path id="navPath" d="" stroke="url(#pathGrad)" stroke-width="3" fill="none" stroke-linecap="round" class="path-line" filter="url(#glow)"/>
-                                <!-- Moving visitor dot -->
-                                <circle id="movingDot" cx="0" cy="0" r="8" fill="#6366f1" filter="url(#glow)" style="display:none;"/>
-                            </g>
-                        </svg>
-                    </div>
-                    <div class="map-legend">
-                        <div class="map-legend-item"><div class="dot" style="background:#3b82f6"></div>Gate (Start)</div>
-                        <div class="map-legend-item"><div class="dot" style="background:#f59e0b"></div>Reception</div>
-                        <div class="map-legend-item"><div class="dot" style="background:#c084fc"></div>Elevator</div>
-                        <div class="map-legend-item"><div class="dot" style="background:#10b981"></div>Meeting Room</div>
-                        <div class="map-legend-item"><div class="dot" style="background:linear-gradient(90deg,#6366f1,#06b6d4)"></div>Navigation Path</div>
-                    </div>
-                </div>
-
-                <!-- Route Directions -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📝 Directions</h3>
-                    </div>
-                    <div id="directions">
-                        <div class="empty-state">
-                            <div class="icon">🧭</div>
-                            <h3>Select a Visitor</h3>
-                            <p class="text-sm text-muted">Choose a visitor and destination to see route directions</p>
-                        </div>
-                    </div>
-                    <div id="voiceStatus" class="hidden mt-3" style="padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;">
-                        <p class="text-sm"><strong>🔊 Voice Navigation Active</strong></p>
-                        <p class="text-sm text-muted" id="voiceText">Initializing...</p>
-                    </div>
-                </div>
-            </div>
+      <!-- Route Config -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h3>🧭 Route Configuration</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" id="voiceBtn" onclick="toggleVoice()">🔊 Voice Nav</button>
+            <button class="btn btn-outline btn-sm" onclick="clearRoute()">✕ Clear</button>
+          </div>
         </div>
-    </main>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:16px;align-items:end;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Select Visitor</label>
+            <select id="visitorSelect" class="form-control" onchange="onVisitorChange()">
+              <option value="">Choose a visitor…</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Destination Room</label>
+            <select id="roomSelect" class="form-control">
+              <option value="">Auto-detect from assignment</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="showRoute()" style="white-space:nowrap;">
+            🗺 Show Route
+          </button>
+        </div>
+
+        <div id="voiceStatus" class="info-box info hidden" style="margin-top:14px;">
+          🔊 <strong>Voice Navigation Active</strong> — <span id="voiceText">Ready. Click "Show Route" to begin.</span>
+        </div>
+      </div>
+
+      <!-- Map + Directions -->
+      <div class="grid-2-1">
+
+        <!-- Map -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="map-toolbar">
+            <span style="font-weight:600;font-size:13px;">🏢 Interactive Floor Plan</span>
+            <div class="floor-tabs">
+              <button class="floor-tab active" data-floor="1" onclick="switchFloor(this)">Ground</button>
+              <button class="floor-tab" data-floor="2" onclick="switchFloor(this)">Floor 1</button>
+              <button class="floor-tab" data-floor="3" onclick="switchFloor(this)">Floor 2</button>
+            </div>
+          </div>
+
+          <div class="map-container">
+            <svg viewBox="0 0 800 480" id="navigationMap" style="width:100%;height:100%;">
+              <defs>
+                <linearGradient id="pathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.9"/>
+                  <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:0.9"/>
+                </linearGradient>
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="softGlow">
+                  <feGaussianBlur stdDeviation="6" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="url(#pathGrad)" opacity="0.8"/>
+                </marker>
+              </defs>
+
+              <!-- Building shell -->
+              <rect x="10" y="10" width="780" height="460" rx="12"
+                    fill="rgba(15,15,40,0.6)" stroke="rgba(99,102,241,0.2)" stroke-width="1.5"/>
+
+              <!-- Main corridor (horizontal) -->
+              <rect x="120" y="215" width="360" height="50" rx="4"
+                    fill="rgba(99,102,241,0.04)" stroke="rgba(99,102,241,0.1)" stroke-width="1"
+                    stroke-dasharray="6,4"/>
+
+              <!-- Gate area -->
+              <rect x="22" y="195" width="96" height="90" rx="8"
+                    fill="rgba(59,130,246,0.10)" stroke="rgba(59,130,246,0.45)" stroke-width="1.5"/>
+              <text x="70" y="232" text-anchor="middle" fill="#60a5fa" font-size="20">🚧</text>
+              <text x="70" y="250" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700" letter-spacing="0.5">GATE</text>
+              <text x="70" y="264" text-anchor="middle" fill="#64748b" font-size="8">Entry Point</text>
+              <circle cx="70" cy="240" r="5" fill="#3b82f6" id="gatePoint"/>
+
+              <!-- Lobby -->
+              <rect x="128" y="160" width="100" height="160" rx="8"
+                    fill="rgba(100,116,139,0.07)" stroke="rgba(100,116,139,0.25)" stroke-width="1"/>
+              <text x="178" y="240" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">LOBBY</text>
+
+              <!-- Reception -->
+              <rect x="245" y="170" width="130" height="120" rx="8"
+                    fill="rgba(245,158,11,0.10)" stroke="rgba(245,158,11,0.45)" stroke-width="1.5"/>
+              <text x="310" y="214" text-anchor="middle" fill="#fbbf24" font-size="20">🛎</text>
+              <text x="310" y="232" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="700" letter-spacing="0.5">RECEPTION</text>
+              <text x="310" y="248" text-anchor="middle" fill="#64748b" font-size="8">Check-in Desk</text>
+              <circle cx="310" cy="230" r="5" fill="#f59e0b" id="receptionPoint"/>
+
+              <!-- Vertical corridor to rooms -->
+              <rect x="472" y="30" width="46" height="420" rx="4"
+                    fill="rgba(99,102,241,0.03)" stroke="rgba(99,102,241,0.08)" stroke-width="1"
+                    stroke-dasharray="6,4"/>
+
+              <!-- Elevator / Stairs -->
+              <rect x="404" y="210" width="58" height="60" rx="6"
+                    fill="rgba(168,85,247,0.10)" stroke="rgba(168,85,247,0.35)" stroke-width="1.5"/>
+              <text x="433" y="242" text-anchor="middle" fill="#c084fc" font-size="20">🛗</text>
+              <text x="433" y="258" text-anchor="middle" fill="#94a3b8" font-size="8">LIFT</text>
+
+              <!-- Meeting rooms — right column -->
+              <!-- MR-101 -->
+              <rect x="528" y="30" width="130" height="85" rx="8"
+                    fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
+                    id="room-MR-101"/>
+              <text x="593" y="68" text-anchor="middle" fill="#34d399" font-size="20">🚪</text>
+              <text x="593" y="86" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">MR-101</text>
+              <text x="593" y="100" text-anchor="middle" fill="#64748b" font-size="8">Lotus · 6 seats</text>
+              <circle cx="528" cy="72" r="4" fill="#10b981" id="pt-MR-101"/>
+
+              <!-- MR-102 -->
+              <rect x="528" y="130" width="130" height="85" rx="8"
+                    fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
+                    id="room-MR-102"/>
+              <text x="593" y="168" text-anchor="middle" fill="#34d399" font-size="20">🚪</text>
+              <text x="593" y="186" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">MR-102</text>
+              <text x="593" y="200" text-anchor="middle" fill="#64748b" font-size="8">Orchid · 4 seats</text>
+              <circle cx="528" cy="172" r="4" fill="#10b981" id="pt-MR-102"/>
+
+              <!-- MR-103 -->
+              <rect x="528" y="230" width="130" height="85" rx="8"
+                    fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
+                    id="room-MR-103"/>
+              <text x="593" y="268" text-anchor="middle" fill="#34d399" font-size="20">🚪</text>
+              <text x="593" y="286" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">MR-103</text>
+              <text x="593" y="300" text-anchor="middle" fill="#64748b" font-size="8">Jasmine · 8 seats</text>
+              <circle cx="528" cy="272" r="4" fill="#10b981" id="pt-MR-103"/>
+
+              <!-- MR-104 -->
+              <rect x="528" y="330" width="130" height="85" rx="8"
+                    fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
+                    id="room-MR-104"/>
+              <text x="593" y="368" text-anchor="middle" fill="#34d399" font-size="20">🚪</text>
+              <text x="593" y="386" text-anchor="middle" fill="#34d399" font-size="10" font-weight="700">MR-104</text>
+              <text x="593" y="400" text-anchor="middle" fill="#64748b" font-size="8">Rose · 10 seats</text>
+              <circle cx="528" cy="372" r="4" fill="#10b981" id="pt-MR-104"/>
+
+              <!-- Far right -->
+              <!-- MR-201 -->
+              <rect x="672" y="30" width="106" height="85" rx="8"
+                    fill="rgba(6,182,212,0.10)" stroke="rgba(6,182,212,0.4)" stroke-width="1.5"
+                    id="room-MR-201"/>
+              <text x="725" y="68" text-anchor="middle" fill="#22d3ee" font-size="20">🚪</text>
+              <text x="725" y="86" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="700">MR-201</text>
+              <text x="725" y="100" text-anchor="middle" fill="#64748b" font-size="8">Tulip · 10 seats</text>
+              <circle cx="672" cy="72" r="4" fill="#06b6d4" id="pt-MR-201"/>
+
+              <!-- MR-202 -->
+              <rect x="672" y="130" width="106" height="85" rx="8"
+                    fill="rgba(6,182,212,0.10)" stroke="rgba(6,182,212,0.4)" stroke-width="1.5"
+                    id="room-MR-202"/>
+              <text x="725" y="168" text-anchor="middle" fill="#22d3ee" font-size="20">🚪</text>
+              <text x="725" y="186" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="700">MR-202</text>
+              <text x="725" y="200" text-anchor="middle" fill="#64748b" font-size="8">Iris · 6 seats</text>
+              <circle cx="672" cy="172" r="4" fill="#06b6d4" id="pt-MR-202"/>
+
+              <!-- Navigation path (hidden until route shown) -->
+              <g id="routePath" style="display:none;">
+                <path id="navPath" d="" stroke="url(#pathGrad)" stroke-width="3.5" fill="none"
+                      stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"
+                      marker-end="url(#arrowHead)"/>
+              </g>
+
+              <!-- Visitor dot -->
+              <circle id="movingDot" cx="-20" cy="-20" r="9" fill="#6366f1" filter="url(#softGlow)" opacity="0.95"/>
+              <circle id="movingRing" cx="-20" cy="-20" r="14" fill="none" stroke="#6366f1" stroke-width="1.5" opacity="0.5"/>
+            </svg>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex;gap:16px;padding:12px 20px;border-top:1px solid var(--border-subtle);flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;"></div>Gate
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></div>Reception
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#c084fc;"></div>Elevator
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#10b981;"></div>Meeting Room
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:26px;height:3px;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:2px;"></div>Route Path
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#6366f1;"></div>Visitor
+            </div>
+          </div>
+        </div>
+
+        <!-- Directions panel -->
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header">
+            <h3>📝 Step-by-Step Directions</h3>
+          </div>
+          <div id="directions" style="flex:1;overflow-y:auto;min-height:0;">
+            <div class="empty-state" style="padding:40px 20px;">
+              <div class="empty-icon">🧭</div>
+              <h3>No Route Selected</h3>
+              <p>Choose a visitor and destination, then click <strong>Show Route</strong></p>
+            </div>
+          </div>
+
+          <!-- Active visitor info -->
+          <div id="visitorInfo" class="hidden" style="padding:14px;border-top:1px solid var(--border-subtle);">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">ACTIVE VISITOR</div>
+            <div id="visitorInfoContent"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
-let voiceEnabled = false;
+let voiceEnabled   = false;
+let _animFrameId   = null;
+let _allRooms      = [];
+let _activeVisitors = [];
+
+const _routes = {
+  'MR-101': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L433,220 L470,220 L470,72 L528,72', room:'Lotus Room',    floor:1 },
+  'MR-102': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L433,172 L470,172 L470,172 L528,172', room:'Orchid Room',  floor:1 },
+  'MR-103': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L470,240 L470,272 L528,272', room:'Jasmine Room',         floor:1 },
+  'MR-104': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L470,240 L470,372 L528,372', room:'Rose Room',            floor:1 },
+  'MR-201': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L433,220 L470,220 L470,72 L528,72 L672,72', room:'Tulip Room', floor:1 },
+  'MR-202': { path: 'M70,240 L120,240 L178,240 L178,200 L310,200 L310,240 L433,240 L433,172 L470,172 L528,172 L672,172', room:'Iris Room',    floor:1 },
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadVisitors();
-    loadRoomOptions();
+  loadVisitors();
+  loadRoomOptions();
 });
 
 async function loadVisitors() {
-    const result = await API.get('/api/visitor/active');
-    const select = document.getElementById('visitorSelect');
-    if (result.success && result.data) {
-        result.data.forEach(v => {
-            select.innerHTML += `<option value="${v.id}" data-room="${v.assignedRoomId || ''}">${v.fullName} (${v.status})</option>`;
-        });
-    }
+  const r = await API.get('/api/visitor/active');
+  _activeVisitors = r.data || [];
+  const sel = document.getElementById('visitorSelect');
+  _activeVisitors.forEach(v => {
+    sel.innerHTML += `<option value="${v.id}" data-room="${v.assignedRoomId || ''}">${v.fullName} (${v.status})</option>`;
+  });
 }
 
 async function loadRoomOptions() {
-    const result = await API.get('/api/rooms');
-    const select = document.getElementById('roomSelect');
-    if (result.success && result.data) {
-        result.data.forEach(r => {
-            select.innerHTML += `<option value="${r.roomCode}">${r.roomName} (${r.roomCode})</option>`;
-        });
-    }
+  const r = await API.get('/api/rooms');
+  _allRooms = r.data || [];
+  const sel = document.getElementById('roomSelect');
+  _allRooms.forEach(rm => {
+    sel.innerHTML += `<option value="${rm.roomCode}">${rm.roomName} (${rm.roomCode}) — Fl.${rm.floor}</option>`;
+  });
 }
 
-function loadVisitorRoute() {
-    const select = document.getElementById('visitorSelect');
-    const option = select.options[select.selectedIndex];
-    if (option && option.dataset.room) {
-        document.getElementById('roomSelect').value = option.dataset.room;
-    }
+function onVisitorChange() {
+  const sel  = document.getElementById('visitorSelect');
+  const opt  = sel.options[sel.selectedIndex];
+  const room = opt?.dataset?.room || '';
+  if (room) document.getElementById('roomSelect').value = room;
 }
 
 function showRoute() {
-    const visitorSelect = document.getElementById('visitorSelect');
-    const roomSelect = document.getElementById('roomSelect');
-    const visitorName = visitorSelect.options[visitorSelect.selectedIndex]?.text || 'Visitor';
-    const roomCode = roomSelect.value || 'MR-101';
+  const vSel   = document.getElementById('visitorSelect');
+  const rSel   = document.getElementById('roomSelect');
+  const vOpt   = vSel.options[vSel.selectedIndex];
+  const roomCode = rSel.value || 'MR-101';
+  const visitorName = vOpt?.text?.split('(')[0]?.trim() || 'Visitor';
 
-    // Define routes
-    const routes = {
-        'MR-101': { path: 'M 75,240 L 160,240 L 280,230 L 445,230 L 445,100 L 530,100', room: 'Lotus Room' },
-        'MR-102': { path: 'M 75,240 L 160,240 L 280,230 L 445,230 L 445,200 L 530,200', room: 'Orchid Room' },
-        'MR-103': { path: 'M 75,240 L 160,240 L 280,230 L 445,230 L 445,300 L 530,300', room: 'Jasmine Room' },
-        'MR-201': { path: 'M 75,240 L 160,240 L 280,230 L 445,230 L 445,100 L 670,100', room: 'Tulip Room' },
-        'MR-202': { path: 'M 75,240 L 160,240 L 280,230 L 445,230 L 445,200 L 670,200', room: 'Iris Room' },
-    };
+  const route = _routes[roomCode] || _routes['MR-101'];
 
-    const route = routes[roomCode] || routes['MR-101'];
+  // Highlight destination room
+  document.querySelectorAll('[id^="room-"]').forEach(el => {
+    el.setAttribute('stroke-opacity', '0.45');
+    el.setAttribute('fill-opacity', '0.10');
+  });
+  const dest = document.getElementById('room-' + roomCode);
+  if (dest) {
+    dest.setAttribute('stroke-opacity', '1');
+    dest.setAttribute('fill-opacity', '0.25');
+    dest.style.filter = 'url(#glow)';
+  }
 
-    // Show path
-    document.getElementById('routePath').style.display = 'block';
-    document.getElementById('navPath').setAttribute('d', route.path);
+  // Draw path
+  document.getElementById('routePath').style.display = 'block';
+  document.getElementById('navPath').setAttribute('d', route.path);
 
-    // Animate moving dot
-    animateVisitorAlongPath(route.path);
+  // Animate visitor dot
+  if (_animFrameId) cancelAnimationFrame(_animFrameId);
+  animateDot(route.path);
 
-    // Show directions
-    const directions = [
-        { icon: '🚧', text: 'Start at Main Gate', detail: 'Show QR pass to security guard' },
-        { icon: '➡️', text: 'Walk straight to Lobby', detail: 'Follow the main corridor (approx. 50m)' },
-        { icon: '🛎', text: 'Check in at Reception', detail: 'Get your NFC tag and room assignment' },
-        { icon: '↗️', text: 'Proceed through Corridor', detail: 'Turn right after reception desk' },
-        { icon: '🛗', text: 'Use elevator if needed', detail: roomCode.startsWith('MR-2') || roomCode.startsWith('MR-3') ? 'Go to Floor ' + roomCode.charAt(3) : 'Stay on Floor 1' },
-        { icon: '🚪', text: `Arrive at ${route.room} (${roomCode})`, detail: 'Your host will be waiting' }
-    ];
+  // Show visitor info card
+  if (vSel.value) {
+    const visitor = _activeVisitors.find(v => v.id == vSel.value);
+    if (visitor) {
+      const c = avatarColor(visitor.fullName);
+      document.getElementById('visitorInfoContent').innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${c};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${initials(visitor.fullName)}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${visitor.fullName}</div>
+            <div style="font-size:11px;color:var(--text-muted);">→ ${route.room} (${roomCode})</div>
+          </div>
+        </div>`;
+      document.getElementById('visitorInfo').classList.remove('hidden');
+    }
+  }
 
-    document.getElementById('directions').innerHTML = `
-        <div class="timeline">
-            ${directions.map((d, i) => `
-                <div class="timeline-item" id="step-${i}">
-                    <div class="time">Step ${i + 1}</div>
-                    <div class="content">
-                        <strong>${d.icon} ${d.text}</strong>
-                        <p class="text-sm text-muted mt-2">${d.detail}</p>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-    `;
+  // Build directions
+  const steps = buildSteps(roomCode, route.room);
+  document.getElementById('directions').innerHTML = `
+    <div style="padding:4px 0;">
+      ${steps.map((s, i) => `
+        <div class="timeline-item" id="step-${i}" style="padding:14px 18px;">
+          <div style="font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:4px;">STEP ${i+1}</div>
+          <div style="font-weight:600;font-size:13px;">${s.icon} ${s.text}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${s.detail}</div>
+        </div>`).join('')}
+    </div>`;
 
-    if (voiceEnabled) speakDirections(directions);
-    Toast.success('Route calculated to ' + route.room);
+  if (voiceEnabled) speakDirections(steps);
+  Toast.success('Route to ' + route.room + ' calculated');
 }
 
-function animateVisitorAlongPath(pathD) {
-    const dot = document.getElementById('movingDot');
-    const path = document.getElementById('navPath');
-    dot.style.display = 'block';
+function buildSteps(roomCode, roomName) {
+  const needsLift = roomCode.startsWith('MR-2') || roomCode.startsWith('MR-3');
+  return [
+    { icon:'🚧', text:'Start at Main Gate',         detail:'Present your QR pass to the security guard' },
+    { icon:'🚶', text:'Walk through Lobby',          detail:'Follow the main corridor — approx. 30 m straight ahead' },
+    { icon:'🛎', text:'Check in at Reception',       detail:'Collect your NFC tag and room confirmation slip' },
+    { icon:'➡️', text:'Continue down Main Corridor', detail:'Turn right past the reception desk toward the east wing' },
+    ...(needsLift ? [{ icon:'🛗', text:'Take the Elevator', detail:'Press floor ' + roomCode.charAt(3) + ' — elevator is on your left' }] : []),
+    { icon:'🚪', text:`Arrive at ${roomName} (${roomCode})`, detail:'Your host will meet you at the entrance' },
+  ];
+}
 
-    // Use SVG path animation
-    const length = path.getTotalLength();
-    let progress = 0;
+function animateDot(pathD) {
+  const navPath = document.getElementById('navPath');
+  const dot     = document.getElementById('movingDot');
+  const ring    = document.getElementById('movingRing');
 
-    function animate() {
-        if (progress >= 1) {
-            progress = 0;
-        }
-        const point = path.getPointAtLength(progress * length);
-        dot.setAttribute('cx', point.x);
-        dot.setAttribute('cy', point.y);
-        progress += 0.003;
-        requestAnimationFrame(animate);
-    }
-    animate();
+  let t = 0;
+  function step() {
+    const length = navPath.getTotalLength();
+    const pt     = navPath.getPointAtLength(t * length);
+    dot.setAttribute('cx',  pt.x);
+    dot.setAttribute('cy',  pt.y);
+    ring.setAttribute('cx', pt.x);
+    ring.setAttribute('cy', pt.y);
+    t += 0.0025;
+    if (t > 1) t = 0;
+    _animFrameId = requestAnimationFrame(step);
+  }
+  step();
+}
+
+function clearRoute() {
+  document.getElementById('routePath').style.display = 'none';
+  if (_animFrameId) { cancelAnimationFrame(_animFrameId); _animFrameId = null; }
+  const dot = document.getElementById('movingDot');
+  dot.setAttribute('cx', '-20'); dot.setAttribute('cy', '-20');
+  document.getElementById('movingRing').setAttribute('cx', '-20');
+  document.getElementById('movingRing').setAttribute('cy', '-20');
+  document.getElementById('directions').innerHTML = `
+    <div class="empty-state" style="padding:40px 20px;">
+      <div class="empty-icon">🧭</div>
+      <h3>No Route Selected</h3>
+      <p>Choose a visitor and destination, then click <strong>Show Route</strong></p>
+    </div>`;
+  document.getElementById('visitorInfo').classList.add('hidden');
+  document.querySelectorAll('[id^="room-"]').forEach(el => {
+    el.setAttribute('stroke-opacity', '0.45');
+    el.setAttribute('fill-opacity', '0.10');
+    el.style.filter = '';
+  });
+  speechSynthesis?.cancel();
+}
+
+function switchFloor(btn) {
+  document.querySelectorAll('.floor-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  Toast.info('Floor ' + btn.dataset.floor + ' view — route recalculates automatically');
 }
 
 function toggleVoice() {
-    voiceEnabled = !voiceEnabled;
-    const status = document.getElementById('voiceStatus');
-    if (voiceEnabled) {
-        status.classList.remove('hidden');
-        document.getElementById('voiceText').textContent = 'Voice navigation is ready. Show a route to begin.';
-        Toast.info('Voice navigation enabled');
-    } else {
-        status.classList.add('hidden');
-        speechSynthesis.cancel();
-        Toast.info('Voice navigation disabled');
-    }
+  voiceEnabled = !voiceEnabled;
+  const btn    = document.getElementById('voiceBtn');
+  const status = document.getElementById('voiceStatus');
+  if (voiceEnabled) {
+    btn.textContent = '🔇 Voice Off';
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-outline');
+    status.classList.remove('hidden');
+  } else {
+    btn.textContent = '🔊 Voice Nav';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline');
+    status.classList.add('hidden');
+    speechSynthesis?.cancel();
+  }
 }
 
-function speakDirections(directions) {
-    if (!('speechSynthesis' in window)) return;
-    speechSynthesis.cancel();
-    directions.forEach((d, i) => {
-        const utterance = new SpeechSynthesisUtterance(`Step ${i + 1}: ${d.text}. ${d.detail}`);
-        utterance.rate = 0.9;
-        utterance.onstart = () => {
-            document.getElementById('voiceText').textContent = `Speaking: ${d.text}`;
-            const el = document.getElementById('step-' + i);
-            if (el) el.style.background = 'rgba(99,102,241,0.1)';
-        };
-        speechSynthesis.speak(utterance);
-    });
-}
-
-function switchFloor(floor) {
-    Toast.info('Showing Floor ' + floor);
+function speakDirections(steps) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  steps.forEach((s, i) => {
+    const u  = new SpeechSynthesisUtterance(`Step ${i+1}: ${s.text}. ${s.detail}`);
+    u.rate   = 0.88;
+    u.onstart = () => {
+      document.getElementById('voiceText').textContent = 'Step ' + (i+1) + ': ' + s.text;
+      const el = document.getElementById('step-' + i);
+      if (el) el.style.background = 'rgba(99,102,241,0.12)';
+    };
+    speechSynthesis.speak(u);
+  });
 }
 </script>
 </body>

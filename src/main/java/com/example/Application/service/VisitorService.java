@@ -19,6 +19,7 @@ public class VisitorService {
     @Autowired private QRCodeService qrCodeService;
     @Autowired private AuditService auditService;
     @Autowired private NotificationService notificationService;
+    @Autowired private Msg91Service msg91Service;
 
     public Visitor register(VisitorRegistrationDTO dto) {
         // Check blacklist
@@ -63,6 +64,33 @@ public class VisitorService {
 
         auditService.log("REGISTRATION", "VISITOR", visitor.getId(),
                 "SYSTEM", "SYSTEM", "Visitor pre-registered: " + visitor.getFullName());
+
+        // Deliver OTP via MSG91
+        String channels = dto.getOtpChannel() != null ? dto.getOtpChannel() : "sms";
+        Msg91Service.OtpResult result = msg91Service.sendOtp(
+                visitor.getPhone(), visitor.getEmail(), visitor.getFullName(), otp, channels);
+        auditService.log("OTP_SENT", "VISITOR", visitor.getId(),
+                "SYSTEM", "SYSTEM", result.summary());
+
+        return visitor;
+    }
+
+    public Visitor resendOtp(Long visitorId, String channels) {
+        Visitor visitor = getById(visitorId);
+        if (visitor.isOtpVerified()) {
+            throw new RuntimeException("OTP already verified — no need to resend");
+        }
+
+        String newOtp = String.format("%06d", new Random().nextInt(999999));
+        visitor.setOtp(newOtp);
+        visitor.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+        visitor = visitorRepository.save(visitor);
+
+        Msg91Service.OtpResult result = msg91Service.sendOtp(
+                visitor.getPhone(), visitor.getEmail(), visitor.getFullName(), newOtp,
+                channels != null ? channels : "sms");
+        auditService.log("OTP_RESENT", "VISITOR", visitor.getId(),
+                "SYSTEM", "SYSTEM", result.summary());
 
         return visitor;
     }

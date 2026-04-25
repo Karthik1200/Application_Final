@@ -1,326 +1,366 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reception Dashboard - VRGT System</title>
-    <meta name="description" content="Reception check-in module with visitor queue and room assignment">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reception — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Reception Module</small></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Reception Module</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception" class="active"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🛎 Reception Dashboard</h1>
+      <div class="header-actions">
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">R</div>
+          <span class="user-name">Receptionist</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception" class="active"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <header class="top-header">
-            <h1>🛎 Reception Dashboard</h1>
-            <div class="header-actions">
-                <span class="header-time" id="headerTime"></span>
-                <div class="notification-bell" onclick="window.location.href='/notifications'">🔔<span class="count" style="display:none">0</span></div>
-                <div class="user-avatar">R</div>
+    <div class="page-content">
+      <!-- KPIs -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card primary">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="queueCount">0</div>
+              <div class="stat-label">In Queue</div>
             </div>
-        </header>
-
-        <div class="page-content">
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="queueCount">0</div>
-                    <div class="stat-label">Visitors in Queue</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon">✓</div>
-                    <div class="stat-value" id="checkedInCount">0</div>
-                    <div class="stat-label">Checked In Today</div>
-                </div>
-                <div class="stat-card secondary">
-                    <div class="stat-icon">🚪</div>
-                    <div class="stat-value" id="availRooms">0</div>
-                    <div class="stat-label">Available Rooms</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon">🏃</div>
-                    <div class="stat-value" id="enRouteCount">0</div>
-                    <div class="stat-label">En Route</div>
-                </div>
-            </div>
-
-            <!-- Queue & Check-in -->
-            <div class="grid-2-1">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>👥 Visitor Queue (Arrivals from Gate)</h3>
-                        <button class="btn btn-outline btn-sm" onclick="loadQueue()">⟳ Refresh</button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Visitor</th>
-                                    <th>Company</th>
-                                    <th>Host</th>
-                                    <th>Purpose</th>
-                                    <th>Arrived</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="queueBody">
-                                <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Available Rooms -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🚪 Available Rooms</h3>
-                    </div>
-                    <div id="roomsList" style="max-height:400px;overflow-y:auto;">
-                        <p class="text-muted text-sm">Loading rooms...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- All Active Visitors table -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h3>📋 All Active Visitors</h3>
-                    <button class="btn btn-outline btn-sm" onclick="loadActiveVisitors()">⟳ Refresh</button>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Company</th>
-                                <th>Host</th>
-                                <th>Room</th>
-                                <th>Status</th>
-                                <th>NFC Tag</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activeVisitorsBody">
-                            <tr><td colspan="8" class="text-center text-muted">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="stat-icon">👥</div>
+          </div>
         </div>
-    </main>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="checkedInCount">0</div>
+              <div class="stat-label">Active Visitors</div>
+            </div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card secondary">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="availRooms">0</div>
+              <div class="stat-label">Rooms Free</div>
+            </div>
+            <div class="stat-icon">🚪</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="enRouteCount">0</div>
+              <div class="stat-label">En Route</div>
+            </div>
+            <div class="stat-icon">🏃</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main layout -->
+      <div class="grid-2-1 mb-4">
+
+        <!-- Queue Panel -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🚶 Visitor Queue <span id="queueBadge" class="badge at-gate" style="margin-left:4px;">0</span></h3>
+            <button class="btn btn-outline btn-sm" onclick="loadQueue()">⟳ Refresh</button>
+          </div>
+          <div class="visitor-queue" id="queueBody">
+            <div class="loading-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Room Availability Sidebar -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🚪 Room Status</h3>
+          </div>
+          <div id="roomsList" style="overflow-y:auto;max-height:420px;">
+            <div class="loading-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Visitors Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📋 All Active Visitors</h3>
+          <div class="card-actions">
+            <div class="search-input" style="width:220px;">
+              <span class="icon">🔍</span>
+              <input type="text" id="visitorSearch" placeholder="Search visitors…" oninput="filterVisitors(this.value)">
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="loadActiveVisitors()">⟳</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Visitor</th>
+                <th>Company</th>
+                <th>Host</th>
+                <th>Room</th>
+                <th>Status</th>
+                <th>NFC Tag</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="activeBody">
+              <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
 <!-- Check-in Modal -->
 <div id="checkinModal" class="modal-overlay hidden">
-    <div class="modal">
-        <div class="modal-header">
-            <h3>🛎 Check-in Visitor</h3>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-        </div>
-        <p id="modalVisitorInfo" class="mb-4 text-sm"></p>
-        <div class="form-group">
-            <label>Assign Meeting Room</label>
-            <select id="modalRoomSelect" class="form-control">
-                <option value="">Select Room...</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <button class="btn btn-outline btn-sm" onclick="autoAssignRoom()">🤖 Auto-Assign Room</button>
-        </div>
-        <div class="flex gap-2" style="justify-content:flex-end;">
-            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-success" onclick="confirmCheckin()">✓ Check In & Assign</button>
-        </div>
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🛎 Check-in Visitor</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
     </div>
+
+    <div id="modalVisitorCard" class="visitor-card" style="margin-bottom:20px;"></div>
+
+    <div class="form-group">
+      <label class="form-label">Assign Meeting Room</label>
+      <select id="modalRoomSelect" class="form-control">
+        <option value="">Select room…</option>
+      </select>
+    </div>
+    <button class="btn btn-outline btn-sm mb-4" onclick="autoAssignRoom()">🤖 Auto-Assign Best Room</button>
+
+    <div id="modalError" class="info-box danger hidden mb-3"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-success" id="checkinConfirmBtn" onclick="confirmCheckin()">✅ Check In &amp; Assign Room</button>
+    </div>
+  </div>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
-let selectedVisitorId = null;
+let _selectedVisitorId = null;
+let _allActiveVisitors = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadQueue();
-    loadRooms();
-    loadActiveVisitors();
-    setInterval(loadQueue, 10000);
+  loadQueue(); loadRooms(); loadActiveVisitors();
+  setInterval(loadQueue, 8000);
+  setInterval(loadRooms, 15000);
 });
 
 async function loadQueue() {
-    const result = await API.get('/api/visitor/queue');
-    const tbody = document.getElementById('queueBody');
-    if (result.success && result.data && result.data.length > 0) {
-        document.getElementById('queueCount').textContent = result.data.length;
-        tbody.innerHTML = result.data.map(v => `
-            <tr>
-                <td>#${v.id}</td>
-                <td><strong>${v.fullName}</strong></td>
-                <td>${v.company || '—'}</td>
-                <td>${v.hostName}</td>
-                <td>${v.purpose || '—'}</td>
-                <td>${timeAgo(v.gateCheckedInAt)}</td>
-                <td>
-                    <button class="btn btn-success btn-sm" onclick="openCheckin(${v.id}, '${v.fullName}', '${v.hostName}', '${v.purpose || ''}')">
-                        Check In
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    } else {
-        document.getElementById('queueCount').textContent = '0';
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No visitors in queue</td></tr>';
-    }
+  const r = await API.get('/api/visitor/queue');
+  const div = document.getElementById('queueBody');
+  const cnt = r.data?.length || 0;
+  document.getElementById('queueCount').textContent = cnt;
+  document.getElementById('queueBadge').textContent = cnt;
+
+  if (!r.success || !r.data?.length) {
+    div.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🎉</div>
+      <h3>Queue is Empty</h3>
+      <p>All visitors have been processed</p>
+    </div>`;
+    return;
+  }
+
+  div.innerHTML = r.data.map(v => `
+    <div class="visitor-card">
+      <div class="vc-avatar" style="background:${avatarColor(v.fullName)}">${initials(v.fullName)}</div>
+      <div class="vc-info">
+        <div class="vc-name">${v.fullName}</div>
+        <div class="vc-meta">${v.company || 'Individual'} · Host: <strong>${v.hostName}</strong></div>
+        <div class="vc-meta mt-1">${v.purpose || '—'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div class="vc-time">${timeAgo(v.gateCheckedInAt)}</div>
+        <button class="btn btn-success btn-sm"
+          onclick="openCheckin(${v.id},'${v.fullName.replace(/'/g,"\\'")}','${v.hostName.replace(/'/g,"\\'")}','${(v.purpose||'').replace(/'/g,"\\'")}','${v.company||''}')">
+          Check In →
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
 async function loadRooms() {
-    const result = await API.get('/api/rooms/available');
-    const div = document.getElementById('roomsList');
-    if (result.success && result.data && result.data.length > 0) {
-        document.getElementById('availRooms').textContent = result.data.length;
-        div.innerHTML = result.data.map(r => `
-            <div style="padding:12px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
-                <div>
-                    <strong>${r.roomName}</strong> <span class="room-code" style="margin-left:4px;">${r.roomCode}</span>
-                    <div class="text-sm text-muted">Floor ${r.floor} · ${r.capacity} seats</div>
-                </div>
-                ${getStatusBadge('AVAILABLE')}
-            </div>
-        `).join('');
-    } else {
-        div.innerHTML = '<p class="text-muted text-sm" style="padding:12px;">No rooms available</p>';
-        document.getElementById('availRooms').textContent = '0';
-    }
+  const r = await API.get('/api/rooms');
+  const div = document.getElementById('roomsList');
+  if (!r.success || !r.data?.length) { div.innerHTML = '<p class="text-muted text-sm" style="padding:12px;">No rooms found</p>'; return; }
+
+  const avail = r.data.filter(x => x.status === 'AVAILABLE').length;
+  document.getElementById('availRooms').textContent = avail;
+
+  div.innerHTML = r.data.map(room => {
+    const cls = room.status === 'AVAILABLE' ? 'available' : room.status === 'OCCUPIED' ? 'occupied' : 'reserved';
+    return `
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${room.roomName} <span class="room-code mono" style="font-size:11px;margin-left:4px;">${room.roomCode}</span></div>
+        <div class="text-sm text-muted">Floor ${room.floor} · ${room.capacity} seats · ${room.facilities || 'Standard'}</div>
+      </div>
+      <span class="badge ${cls}">${room.status}</span>
+    </div>`;
+  }).join('');
 }
 
 async function loadActiveVisitors() {
-    const result = await API.get('/api/visitor/active');
-    const tbody = document.getElementById('activeVisitorsBody');
-    if (result.success && result.data && result.data.length > 0) {
-        const enRoute = result.data.filter(v => v.status === 'EN_ROUTE').length;
-        document.getElementById('enRouteCount').textContent = enRoute;
-        document.getElementById('checkedInCount').textContent = result.data.length;
-        tbody.innerHTML = result.data.map(v => `
-            <tr>
-                <td>#${v.id}</td>
-                <td>${v.fullName}</td>
-                <td>${v.company || '—'}</td>
-                <td>${v.hostName}</td>
-                <td>${v.assignedRoomId || '—'}</td>
-                <td>${getStatusBadge(v.status)}</td>
-                <td><code style="font-size:11px;">${v.nfcTagId || '—'}</code></td>
-                <td>
-                    ${v.status === 'HOST_CONFIRMED' ? `<button class="btn btn-primary btn-sm" onclick="startRoute(${v.id})">🗺 Start Route</button>` : ''}
-                    ${v.status !== 'CHECKED_OUT' ? `<button class="btn btn-outline btn-sm" onclick="checkoutVisitor(${v.id})" style="margin-left:4px;">Checkout</button>` : ''}
-                </td>
-            </tr>
-        `).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No active visitors</td></tr>';
-    }
+  const r = await API.get('/api/visitor/active');
+  _allActiveVisitors = r.data || [];
+  renderActiveVisitors(_allActiveVisitors);
+
+  const enRoute = _allActiveVisitors.filter(v => v.status === 'EN_ROUTE').length;
+  document.getElementById('enRouteCount').textContent = enRoute;
+  document.getElementById('checkedInCount').textContent = _allActiveVisitors.length;
 }
 
-function openCheckin(visitorId, name, host, purpose) {
-    selectedVisitorId = visitorId;
-    document.getElementById('modalVisitorInfo').innerHTML =
-        `<strong>${name}</strong> visiting <strong>${host}</strong> for: ${purpose}`;
-    // Load available rooms into modal select
-    API.get('/api/rooms/available').then(result => {
-        const select = document.getElementById('modalRoomSelect');
-        select.innerHTML = '<option value="">Select Room...</option>';
-        if (result.success && result.data) {
-            result.data.forEach(r => {
-                select.innerHTML += `<option value="${r.roomCode}">${r.roomName} (${r.roomCode}) - Floor ${r.floor}, ${r.capacity} seats</option>`;
-            });
-        }
-    });
-    document.getElementById('checkinModal').classList.remove('hidden');
+function filterVisitors(q) {
+  const filtered = _allActiveVisitors.filter(v =>
+    !q || [v.fullName, v.company, v.hostName, v.status].join(' ').toLowerCase().includes(q.toLowerCase())
+  );
+  renderActiveVisitors(filtered);
+}
+
+function renderActiveVisitors(list) {
+  const tbody = document.getElementById('activeBody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No active visitors</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(v => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor(v.fullName)};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;">${initials(v.fullName)}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${v.fullName}</div>
+            <div class="text-xs text-muted">#${v.id}</div>
+          </div>
+        </div>
+      </td>
+      <td class="td-muted">${v.company || '—'}</td>
+      <td>${v.hostName}</td>
+      <td><span class="mono text-sm">${v.assignedRoomId || '—'}</span></td>
+      <td>${getStatusBadge(v.status)}</td>
+      <td><span class="mono text-xs text-muted">${v.nfcTagId || '—'}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          ${v.status === 'HOST_CONFIRMED' ? `<button class="btn btn-primary btn-sm" onclick="startRoute(${v.id})">🗺 Route</button>` : ''}
+          ${v.status !== 'CHECKED_OUT' ? `<button class="btn btn-ghost btn-sm" onclick="checkoutVisitor(${v.id})">Checkout</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openCheckin(id, name, host, purpose, company) {
+  _selectedVisitorId = id;
+  const c = avatarColor(name);
+  document.getElementById('modalVisitorCard').innerHTML = `
+    <div class="vc-avatar" style="background:${c}">${initials(name)}</div>
+    <div class="vc-info">
+      <div class="vc-name">${name}</div>
+      <div class="vc-meta">${company || 'Individual'} · Purpose: ${purpose || '—'}</div>
+      <div class="vc-meta">Meeting with: <strong>${host}</strong></div>
+    </div>`;
+
+  API.get('/api/rooms/available').then(r => {
+    const sel = document.getElementById('modalRoomSelect');
+    sel.innerHTML = '<option value="">Select a room…</option>';
+    (r.data || []).forEach(rm =>
+      sel.innerHTML += `<option value="${rm.roomCode}">${rm.roomName} (${rm.roomCode}) — Floor ${rm.floor}, ${rm.capacity} seats</option>`
+    );
+  });
+  document.getElementById('modalError').classList.add('hidden');
+  document.getElementById('checkinModal').classList.remove('hidden');
 }
 
 function closeModal() {
-    document.getElementById('checkinModal').classList.add('hidden');
-    selectedVisitorId = null;
+  document.getElementById('checkinModal').classList.add('hidden');
+  _selectedVisitorId = null;
 }
 
 async function autoAssignRoom() {
-    const result = await API.post('/api/reception/auto-assign-room', { capacity: 2 });
-    if (result.success && result.data) {
-        document.getElementById('modalRoomSelect').value = result.data.roomCode;
-        Toast.info('Auto-assigned: ' + result.data.roomName + ' (' + result.data.roomCode + ')');
-    } else {
-        Toast.error(result.message || 'No rooms available');
-    }
+  const r = await API.post('/api/reception/auto-assign-room', { capacity: 2 });
+  if (r.success && r.data) {
+    document.getElementById('modalRoomSelect').value = r.data.roomCode;
+    Toast.info('Auto-assigned: ' + r.data.roomName);
+  } else Toast.error(r.message || 'No rooms available');
 }
 
 async function confirmCheckin() {
-    const roomCode = document.getElementById('modalRoomSelect').value;
-    if (!roomCode) { Toast.error('Please select a room'); return; }
+  const roomCode = document.getElementById('modalRoomSelect').value;
+  if (!roomCode) { document.getElementById('modalError').innerHTML = 'Please select a room'; document.getElementById('modalError').classList.remove('hidden'); return; }
 
-    const result = await API.post('/api/reception/checkin', {
-        visitorId: selectedVisitorId.toString(),
-        roomCode: roomCode,
-        receptionist: 'reception1'
-    });
+  const btn = document.getElementById('checkinConfirmBtn');
+  setLoading(btn, 'Processing…');
 
-    if (result.success) {
-        Toast.success('Visitor checked in and room assigned!');
-        closeModal();
-        loadQueue();
-        loadRooms();
-        loadActiveVisitors();
-    } else {
-        Toast.error(result.message);
-    }
+  const r = await API.post('/api/reception/checkin', {
+    visitorId: _selectedVisitorId.toString(),
+    roomCode,
+    receptionist: 'reception1',
+  });
+
+  if (r.success) {
+    Toast.success('Visitor checked in and room assigned!');
+    closeModal(); loadQueue(); loadRooms(); loadActiveVisitors();
+  } else {
+    document.getElementById('modalError').innerHTML = r.message || 'Check-in failed';
+    document.getElementById('modalError').classList.remove('hidden');
+  }
+  clearLoading(btn);
 }
 
 async function startRoute(visitorId) {
-    const result = await API.post('/api/reception/start-route/' + visitorId);
-    if (result.success) {
-        Toast.success('Route started! Visitor is en route to meeting room.');
-        loadActiveVisitors();
-    } else {
-        Toast.error(result.message);
-    }
+  const r = await API.post('/api/reception/start-route/' + visitorId);
+  if (r.success) { Toast.success('Route started — visitor heading to meeting room'); loadActiveVisitors(); }
+  else Toast.error(r.message);
 }
 
-async function checkoutVisitor(visitorId) {
-    const result = await API.post('/api/visitor/' + visitorId + '/checkout');
-    if (result.success) {
-        Toast.success('Visitor checked out');
-        loadActiveVisitors(); loadQueue();
-    } else {
-        Toast.error(result.message);
-    }
+async function checkoutVisitor(id) {
+  if (!await confirm2('Check out this visitor?')) return;
+  const r = await API.post('/api/visitor/' + id + '/checkout');
+  if (r.success) { Toast.success('Visitor checked out'); loadActiveVisitors(); loadQueue(); }
+  else Toast.error(r.message);
 }
 
-function onReceptionEvent(data) {
-    loadQueue();
-    loadActiveVisitors();
-    Toast.info(data.visitorName + ' - ' + data.type);
-}
-
-function onGateEvent(data) {
-    loadQueue();
-    Toast.info('New arrival at gate: ' + data.visitorName);
-}
+function onReceptionEvent(data) { loadQueue(); loadActiveVisitors(); Toast.info(data.visitorName + ' — ' + data.type); }
+function onGateEvent(data)      { loadQueue(); Toast.info('New arrival: ' + data.visitorName); }
+function onRoomUpdate()         { loadRooms(); }
 </script>
 </body>
 </html>

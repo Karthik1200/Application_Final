@@ -1,262 +1,335 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Tracking - VRGT System</title>
-    <meta name="description" content="Real-time visitor tracking dashboard with live location updates">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Tracking — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Tracking Module</small></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Tracking Module</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking" class="active"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="emergency-banner" id="emergencyBanner">🚨 EMERGENCY PROTOCOL ACTIVE — All visitors are being tracked for evacuation</div>
+
+    <header class="top-header">
+      <h1>📍 Live Tracking</h1>
+      <div class="header-actions">
+        <button class="btn btn-danger btn-sm" onclick="activateEmergency()">🚨 Emergency</button>
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">T</div>
+          <span class="user-name">Security</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking" class="active"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <div class="emergency-banner" id="emergencyBanner">🚨 EMERGENCY - All visitors being tracked for evacuation</div>
-        <header class="top-header">
-            <h1>📍 Real-Time Visitor Tracking</h1>
-            <div class="header-actions">
-                <button class="btn btn-danger btn-sm" onclick="activateEmergency()">🚨 Emergency</button>
-                <span class="header-time" id="headerTime"></span>
-                <div class="notification-bell" onclick="window.location.href='/notifications'">🔔<span class="count" style="display:none">0</span></div>
-                <div class="user-avatar">T</div>
-            </div>
-        </header>
-
-        <div class="page-content">
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="totalActive">0</div>
-                    <div class="stat-label">Active Visitors</div>
-                </div>
-                <div class="stat-card info">
-                    <div class="stat-icon">🚧</div>
-                    <div class="stat-value" id="atGate">0</div>
-                    <div class="stat-label">At Gate</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon">🛎</div>
-                    <div class="stat-value" id="atReception">0</div>
-                    <div class="stat-label">At Reception</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon">📍</div>
-                    <div class="stat-value" id="inMeeting">0</div>
-                    <div class="stat-label">In Meeting</div>
-                </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon">⚠</div>
-                    <div class="stat-value" id="alertCount">0</div>
-                    <div class="stat-label">Alerts</div>
-                </div>
-            </div>
-
-            <!-- Live Tracking Map -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h3>🗺 Live Floor Map</h3>
-                    <div class="flex gap-2">
-                        <button class="btn btn-outline btn-sm" onclick="loadTracking()">⟳ Refresh</button>
-                    </div>
-                </div>
-                <div class="map-svg-wrapper" id="trackingMap">
-                    <svg viewBox="0 0 900 600" id="floorSvg">
-                        <!-- Building outline -->
-                        <rect x="30" y="30" width="840" height="540" rx="8" fill="none" stroke="rgba(99,102,241,0.2)" stroke-width="2"/>
-
-                        <!-- Gate -->
-                        <rect x="40" y="280" width="100" height="80" rx="6" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.3)" stroke-width="1.5"/>
-                        <text x="90" y="310" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">GATE</text>
-                        <text x="90" y="330" text-anchor="middle" fill="#64748b" font-size="9">Entry Point</text>
-
-                        <!-- Lobby -->
-                        <rect x="160" y="240" width="120" height="120" rx="6" fill="rgba(168,85,247,0.06)" stroke="rgba(168,85,247,0.2)" stroke-width="1"/>
-                        <text x="220" y="300" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="600">LOBBY</text>
-
-                        <!-- Reception -->
-                        <rect x="300" y="220" width="140" height="100" rx="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
-                        <text x="370" y="260" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">RECEPTION</text>
-                        <text x="370" y="280" text-anchor="middle" fill="#64748b" font-size="9">Check-in Desk</text>
-
-                        <!-- Corridors -->
-                        <rect x="460" y="140" width="30" height="300" rx="4" fill="rgba(99,102,241,0.04)" stroke="rgba(99,102,241,0.15)" stroke-width="1" stroke-dasharray="4 2"/>
-                        <text x="475" y="290" text-anchor="middle" fill="#6366f1" font-size="9" transform="rotate(-90,475,290)">CORRIDOR</text>
-
-                        <!-- Meeting Rooms -->
-                        <rect x="520" y="80" width="140" height="90" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.3)" stroke-width="1.5"/>
-                        <text x="590" y="115" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">MR-101</text>
-                        <text x="590" y="135" text-anchor="middle" fill="#64748b" font-size="9">Lotus Room</text>
-
-                        <rect x="520" y="190" width="140" height="90" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.3)" stroke-width="1.5"/>
-                        <text x="590" y="225" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">MR-102</text>
-                        <text x="590" y="245" text-anchor="middle" fill="#64748b" font-size="9">Orchid Room</text>
-
-                        <rect x="520" y="300" width="140" height="90" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.3)" stroke-width="1.5"/>
-                        <text x="590" y="335" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">MR-103</text>
-                        <text x="590" y="355" text-anchor="middle" fill="#64748b" font-size="9">Jasmine Room</text>
-
-                        <rect x="700" y="80" width="140" height="90" rx="6" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.3)" stroke-width="1.5"/>
-                        <text x="770" y="115" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600">MR-201</text>
-                        <text x="770" y="135" text-anchor="middle" fill="#64748b" font-size="9">Tulip Room</text>
-
-                        <rect x="700" y="190" width="140" height="90" rx="6" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.3)" stroke-width="1.5"/>
-                        <text x="770" y="225" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600">MR-202</text>
-                        <text x="770" y="245" text-anchor="middle" fill="#64748b" font-size="9">Iris Room</text>
-
-                        <!-- Restricted Zone -->
-                        <rect x="700" y="400" width="140" height="100" rx="6" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.4)" stroke-width="1.5" stroke-dasharray="6 3"/>
-                        <text x="770" y="440" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">⚠ RESTRICTED</text>
-                        <text x="770" y="460" text-anchor="middle" fill="#f87171" font-size="9">Server Room</text>
-
-                        <!-- Cafeteria -->
-                        <rect x="300" y="420" width="140" height="100" rx="6" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
-                        <text x="370" y="465" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">☕ Cafeteria</text>
-
-                        <!-- Visitor dots - dynamically added -->
-                        <g id="visitorDots"></g>
-                    </svg>
-                </div>
-                <div class="map-legend">
-                    <div class="map-legend-item"><div class="dot" style="background:var(--info)"></div>At Gate</div>
-                    <div class="map-legend-item"><div class="dot" style="background:var(--accent)"></div>At Reception</div>
-                    <div class="map-legend-item"><div class="dot" style="background:#c084fc"></div>En Route</div>
-                    <div class="map-legend-item"><div class="dot" style="background:var(--success)"></div>In Meeting</div>
-                    <div class="map-legend-item"><div class="dot" style="background:var(--danger)"></div>Restricted Zone Alert</div>
-                </div>
-            </div>
-
-            <!-- Visitor List -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>👥 All Tracked Visitors</h3>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Visitor</th>
-                                <th>Company</th>
-                                <th>Location</th>
-                                <th>Status</th>
-                                <th>Host</th>
-                                <th>Room</th>
-                                <th>Last Update</th>
-                            </tr>
-                        </thead>
-                        <tbody id="trackingBody">
-                            <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="page-content">
+      <!-- KPIs -->
+      <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card primary">
+          <div class="stat-row">
+            <div><div class="stat-value" id="totalActive">0</div><div class="stat-label">Active</div></div>
+            <div class="stat-icon">👥</div>
+          </div>
         </div>
-    </main>
+        <div class="stat-card info">
+          <div class="stat-row">
+            <div><div class="stat-value" id="atGate">0</div><div class="stat-label">At Gate</div></div>
+            <div class="stat-icon">🚧</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-row">
+            <div><div class="stat-value" id="atReception">0</div><div class="stat-label">Reception</div></div>
+            <div class="stat-icon">🛎</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div><div class="stat-value" id="inMeeting">0</div><div class="stat-label">In Meeting</div></div>
+            <div class="stat-icon">📍</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div><div class="stat-value" id="alertCount">0</div><div class="stat-label">Alerts</div></div>
+            <div class="stat-icon">⚠</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map + Sidebar -->
+      <div class="grid-3-1 mb-4">
+        <!-- Live Floor Map -->
+        <div class="map-container">
+          <div class="map-toolbar">
+            <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">🗺 Live Floor Map</span>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+              <div class="header-chip" id="liveIndicator">Live</div>
+              <button class="btn btn-outline btn-sm" onclick="loadTracking()">⟳</button>
+            </div>
+          </div>
+
+          <div class="map-svg-wrapper">
+            <svg viewBox="0 0 900 580" id="floorSvg">
+              <!-- Building outline -->
+              <rect x="20" y="20" width="860" height="540" rx="10" fill="none" stroke="rgba(99,102,241,0.15)" stroke-width="1.5"/>
+
+              <!-- Gate -->
+              <rect x="30" y="260" width="110" height="100" rx="8" fill="rgba(59,130,246,0.07)" stroke="rgba(59,130,246,0.3)" stroke-width="1.5"/>
+              <text x="85" y="300" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">GATE</text>
+              <text x="85" y="318" text-anchor="middle" fill="#475569" font-size="9">Entry Point</text>
+
+              <!-- Lobby -->
+              <rect x="160" y="230" width="130" height="130" rx="8" fill="rgba(168,85,247,0.06)" stroke="rgba(168,85,247,0.2)" stroke-width="1"/>
+              <text x="225" y="298" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600">LOBBY</text>
+
+              <!-- Reception -->
+              <rect x="310" y="210" width="150" height="110" rx="8" fill="rgba(245,158,11,0.07)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+              <text x="385" y="255" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">RECEPTION</text>
+              <text x="385" y="273" text-anchor="middle" fill="#475569" font-size="9">Check-in Desk</text>
+
+              <!-- Corridor -->
+              <rect x="480" y="120" width="28" height="340" rx="4" fill="rgba(99,102,241,0.03)" stroke="rgba(99,102,241,0.12)" stroke-dasharray="4 3" stroke-width="1"/>
+              <text x="494" y="295" text-anchor="middle" fill="#6366f1" font-size="8" transform="rotate(-90,494,295)">CORRIDOR A</text>
+
+              <!-- Meeting Rooms Floor 1 -->
+              <rect x="530" y="60" width="150" height="100" rx="8" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+              <text x="605" y="100" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">MR-101</text>
+              <text x="605" y="118" text-anchor="middle" fill="#475569" font-size="9">Lotus Room</text>
+
+              <rect x="530" y="180" width="150" height="100" rx="8" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+              <text x="605" y="220" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">MR-102</text>
+              <text x="605" y="238" text-anchor="middle" fill="#475569" font-size="9">Orchid Room</text>
+
+              <rect x="530" y="300" width="150" height="100" rx="8" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+              <text x="605" y="340" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">MR-103</text>
+              <text x="605" y="358" text-anchor="middle" fill="#475569" font-size="9">Jasmine Room</text>
+
+              <!-- Meeting Rooms Floor 2 -->
+              <rect x="710" y="60" width="150" height="100" rx="8" fill="rgba(6,182,212,0.07)" stroke="rgba(6,182,212,0.25)" stroke-width="1.5"/>
+              <text x="785" y="100" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">MR-201</text>
+              <text x="785" y="118" text-anchor="middle" fill="#475569" font-size="9">Tulip Room</text>
+
+              <rect x="710" y="180" width="150" height="100" rx="8" fill="rgba(6,182,212,0.07)" stroke="rgba(6,182,212,0.25)" stroke-width="1.5"/>
+              <text x="785" y="220" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">MR-202</text>
+              <text x="785" y="238" text-anchor="middle" fill="#475569" font-size="9">Iris Room</text>
+
+              <!-- Cafeteria -->
+              <rect x="310" y="400" width="150" height="110" rx="8" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.18)" stroke-width="1"/>
+              <text x="385" y="458" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">☕ Cafeteria</text>
+
+              <!-- Restricted Zone -->
+              <rect x="710" y="390" width="150" height="110" rx="8" fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.4)" stroke-width="1.5" stroke-dasharray="6 3"/>
+              <text x="785" y="435" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">⚠ RESTRICTED</text>
+              <text x="785" y="453" text-anchor="middle" fill="#ef4444" font-size="9">Server Room</text>
+
+              <!-- Visitor markers (dynamic) -->
+              <g id="visitorDots"></g>
+            </svg>
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>At Gate</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>In Lobby</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Reception</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>En Route</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>In Meeting</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Alert</div>
+          </div>
+        </div>
+
+        <!-- Active Visitors Sidebar -->
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header">
+            <h3>👥 Visitors</h3>
+            <button class="btn btn-ghost btn-sm" onclick="loadTracking()">⟳</button>
+          </div>
+          <div id="visitorSidebar" style="flex:1;overflow-y:auto;max-height:480px;">
+            <div class="loading-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visitor Details Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3>📊 Visitor Status Board</h3>
+          <div class="search-input" style="width:220px;">
+            <span class="icon">🔍</span>
+            <input type="text" id="trackSearch" placeholder="Filter visitors…" oninput="filterTracking(this.value)">
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Visitor</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Host</th>
+                <th>Room</th>
+                <th>Last Update</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="trackingBody">
+              <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
+let _trackData = [];
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadTracking();
-    setInterval(loadTracking, 5000);
+  loadTracking();
+  setInterval(loadTracking, 6000);
 });
 
+const _posMap = {
+  CHECKED_IN_GATE: { x:85, y:310 },
+  AT_RECEPTION:    { x:385, y:265 },
+  HOST_CONFIRMED:  { x:385, y:255 },
+  EN_ROUTE:        { x:494, y:250 },
+  IN_MEETING:      { x:605, y:230 },
+  PRE_REGISTERED:  { x:50, y:360 },
+};
+const _colorMap = {
+  CHECKED_IN_GATE: '#3b82f6',
+  AT_RECEPTION:    '#f59e0b',
+  HOST_CONFIRMED:  '#f59e0b',
+  EN_ROUTE:        '#a855f7',
+  IN_MEETING:      '#10b981',
+};
+
 async function loadTracking() {
-    const result = await API.get('/api/tracking/all-locations');
-    if (!result.success || !result.data) return;
+  const r = await API.get('/api/tracking/all-locations');
+  if (!r.success || !r.data) return;
 
-    const visitors = result.data;
-    document.getElementById('totalActive').textContent = visitors.length;
-    document.getElementById('atGate').textContent = visitors.filter(v => v.status === 'CHECKED_IN_GATE').length;
-    document.getElementById('atReception').textContent = visitors.filter(v =>
-        v.status === 'AT_RECEPTION' || v.status === 'HOST_CONFIRMED').length;
-    document.getElementById('inMeeting').textContent = visitors.filter(v => v.status === 'IN_MEETING').length;
-    document.getElementById('alertCount').textContent = visitors.filter(v => v.restricted).length;
+  _trackData = r.data;
+  const visitors = _trackData;
 
-    // Update map dots
-    const dotsGroup = document.getElementById('visitorDots');
-    dotsGroup.innerHTML = visitors.map(v => {
-        const x = v.posX || getDefaultPos(v.status).x;
-        const y = v.posY || getDefaultPos(v.status).y;
-        const color = getStatusColor(v.status, v.restricted);
-        return `
-            <g class="visitor-marker" data-id="${v.visitorId}">
-                <circle cx="${x}" cy="${y}" r="12" fill="${color}" opacity="0.15" class="pulse-ring"/>
-                <circle cx="${x}" cy="${y}" r="6" fill="${color}" class="visitor-dot" style="animation-delay:${Math.random()}s"/>
-                <text x="${x}" y="${y - 14}" text-anchor="middle" fill="${color}" font-size="9" font-weight="600">${v.visitorName?.split(' ')[0] || ''}</text>
-            </g>
-        `;
+  // Update stats
+  document.getElementById('totalActive').textContent  = visitors.length;
+  document.getElementById('atGate').textContent       = visitors.filter(v => v.status === 'CHECKED_IN_GATE').length;
+  document.getElementById('atReception').textContent  = visitors.filter(v => ['AT_RECEPTION','HOST_CONFIRMED'].includes(v.status)).length;
+  document.getElementById('inMeeting').textContent    = visitors.filter(v => v.status === 'IN_MEETING').length;
+  document.getElementById('alertCount').textContent   = visitors.filter(v => v.restricted).length;
+
+  // Update map dots
+  const g = document.getElementById('visitorDots');
+  g.innerHTML = visitors.map((v, i) => {
+    const pos   = _posMap[v.status] || { x: 200, y: 300 };
+    const x     = pos.x + (i % 4) * 14;
+    const y     = pos.y + Math.floor(i / 4) * 14;
+    const color = v.restricted ? '#ef4444' : (_colorMap[v.status] || '#6366f1');
+    return `
+      <g>
+        <circle cx="${x}" cy="${y}" r="16" fill="${color}" opacity="0.1" class="pulse-ring"/>
+        <circle cx="${x}" cy="${y}" r="7" fill="${color}" class="visitor-dot"/>
+        <text x="${x}" y="${y - 12}" text-anchor="middle" fill="${color}" font-size="8" font-weight="700">${(v.visitorName || '').split(' ')[0]}</text>
+      </g>`;
+  }).join('');
+
+  // Update sidebar
+  const sidebar = document.getElementById('visitorSidebar');
+  if (!visitors.length) {
+    sidebar.innerHTML = '<div class="empty-state"><div class="empty-icon">🏢</div><h3>No active visitors</h3></div>';
+  } else {
+    sidebar.innerHTML = visitors.map(v => {
+      const color = v.restricted ? '#ef4444' : (_colorMap[v.status] || '#6366f1');
+      return `
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:10px;${v.restricted ? 'background:rgba(239,68,68,0.06);' : ''}">
+        <div style="width:34px;height:34px;border-radius:50%;background:${avatarColor(v.visitorName)};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">${initials(v.visitorName)}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;truncate">${v.visitorName}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${v.location || v.status || '—'}</div>
+        </div>
+        <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+      </div>`;
     }).join('');
+  }
 
-    // Update table
-    const tbody = document.getElementById('trackingBody');
-    tbody.innerHTML = visitors.length > 0 ? visitors.map(v => `
-        <tr style="${v.restricted ? 'background:rgba(239,68,68,0.08);' : ''}">
-            <td><strong>${v.visitorName}</strong></td>
-            <td>${v.company || '—'}</td>
-            <td>${v.location || '—'}</td>
-            <td>${getStatusBadge(v.status)}</td>
-            <td>${v.hostName || '—'}</td>
-            <td>${v.assignedRoom || '—'}</td>
-            <td>${v.lastUpdate ? timeAgo(v.lastUpdate) : '—'}</td>
-        </tr>
-    `).join('') : '<tr><td colspan="7" class="text-center text-muted">No active visitors</td></tr>';
+  renderTrackingTable(visitors);
 }
 
-function getDefaultPos(status) {
-    const positions = {
-        'CHECKED_IN_GATE': { x: 90, y: 320 },
-        'AT_RECEPTION': { x: 370, y: 270 },
-        'HOST_CONFIRMED': { x: 370, y: 260 },
-        'EN_ROUTE': { x: 475, y: 250 },
-        'IN_MEETING': { x: 590, y: 230 },
-        'PRE_REGISTERED': { x: 60, y: 350 }
-    };
-    return positions[status] || { x: 200, y: 300 };
+function filterTracking(q) {
+  const filtered = !q ? _trackData : _trackData.filter(v =>
+    [v.visitorName, v.company, v.status, v.location].join(' ').toLowerCase().includes(q.toLowerCase())
+  );
+  renderTrackingTable(filtered);
 }
 
-function getStatusColor(status, restricted) {
-    if (restricted) return '#ef4444';
-    const colors = {
-        'CHECKED_IN_GATE': '#3b82f6',
-        'AT_RECEPTION': '#f59e0b',
-        'HOST_CONFIRMED': '#f59e0b',
-        'EN_ROUTE': '#a855f7',
-        'IN_MEETING': '#10b981'
-    };
-    return colors[status] || '#6366f1';
+function renderTrackingTable(visitors) {
+  const tbody = document.getElementById('trackingBody');
+  if (!visitors.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:24px;">No active visitors</td></tr>'; return; }
+
+  tbody.innerHTML = visitors.map(v => `
+    <tr style="${v.restricted ? 'background:rgba(239,68,68,0.05);' : ''}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor(v.visitorName)};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;">${initials(v.visitorName)}</div>
+          <strong>${v.visitorName}</strong>
+          ${v.restricted ? '<span class="badge alert" style="font-size:10px;">⚠ Alert</span>' : ''}
+        </div>
+      </td>
+      <td class="td-muted">${v.company || '—'}</td>
+      <td><span class="mono text-sm">${v.location || '—'}</span></td>
+      <td>${getStatusBadge(v.status)}</td>
+      <td>${v.hostName || '—'}</td>
+      <td><span class="mono text-sm">${v.assignedRoom || '—'}</span></td>
+      <td class="td-muted mono">${v.lastUpdate ? timeAgo(v.lastUpdate) : '—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="checkoutFromTracking(${v.visitorId})">Checkout</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function checkoutFromTracking(id) {
+  if (!await confirm2('Check out this visitor?')) return;
+  const r = await API.post('/api/visitor/' + id + '/checkout');
+  if (r.success) { Toast.success('Visitor checked out'); loadTracking(); }
+  else Toast.error(r.message);
 }
 
 async function activateEmergency() {
-    if (!confirm('⚠ Activate Emergency Protocol? This will track all visitors for evacuation.')) return;
-    const result = await API.post('/api/tracking/emergency');
-    if (result.success) {
-        document.getElementById('emergencyBanner').style.display = 'flex';
-        Toast.error('Emergency protocol activated!');
-        loadTracking();
-    }
+  if (!await confirm2('⚠ Activate Emergency Protocol? This will track all visitors for evacuation.')) return;
+  const r = await API.post('/api/tracking/emergency');
+  if (r.success) { document.getElementById('emergencyBanner').style.display = 'flex'; Toast.error('Emergency protocol activated!'); loadTracking(); }
 }
 
-function onTrackingUpdate(data) {
-    loadTracking();
-}
+function onTrackingUpdate() { loadTracking(); }
 </script>
 </body>
 </html>

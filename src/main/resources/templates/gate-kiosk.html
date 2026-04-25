@@ -1,237 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Kiosk - VRGT System</title>
-    <meta name="description" content="Gate entry module for QR scanning and visitor verification">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gate Kiosk — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Gate Module</small></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Gate Module</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate" class="active"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="emergency-banner" id="emergencyBanner">🚨 EMERGENCY PROTOCOL ACTIVE — All visitors are being tracked</div>
+
+    <header class="top-header">
+      <h1>🚧 Gate Entry</h1>
+      <div class="header-actions">
+        <div class="header-chip">Gate Active</div>
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">G</div>
+          <span class="user-name">Guard</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate" class="active"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <div class="emergency-banner" id="emergencyBanner">🚨 EMERGENCY PROTOCOL ACTIVE - All visitors being tracked</div>
-        <header class="top-header">
-            <h1>🚧 Gate Entry Module</h1>
-            <div class="header-actions">
-                <span class="header-time" id="headerTime"></span>
-                <div class="notification-bell" onclick="window.location.href='/notifications'">🔔<span class="count" style="display:none">0</span></div>
-                <div class="user-avatar">G</div>
+    <div class="page-content">
+
+      <!-- KPI Row -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card primary">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="statTotal">0</div>
+              <div class="stat-label">Today's Entries</div>
             </div>
-        </header>
-
-        <div class="page-content">
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">🚧</div>
-                    <div class="stat-value" id="todayEntries">0</div>
-                    <div class="stat-label">Today's Entries</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon">✓</div>
-                    <div class="stat-value" id="validScans">0</div>
-                    <div class="stat-label">Valid Scans</div>
-                </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon">✕</div>
-                    <div class="stat-value" id="failedScans">0</div>
-                    <div class="stat-label">Failed Scans</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon">⏳</div>
-                    <div class="stat-value" id="pendingVerify">0</div>
-                    <div class="stat-label">Pending Verification</div>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <!-- QR Scanner -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📷 QR Code Scanner</h3>
-                        <select class="form-control" style="width:auto;padding:6px 12px;" id="gateSelect">
-                            <option value="GATE_1">Gate 1 - Main</option>
-                            <option value="GATE_2">Gate 2 - Side</option>
-                            <option value="GATE_3">Gate 3 - VIP</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Scan or Paste QR Code Data</label>
-                        <textarea id="qrInput" class="form-control" rows="4"
-                            placeholder="QR code data will appear here when scanned...&#10;Or paste encrypted QR data manually for demo."></textarea>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="btn btn-primary" onclick="scanQR()">🔍 Validate QR</button>
-                        <button class="btn btn-outline" onclick="simulateScan()">🎯 Simulate Scan</button>
-                    </div>
-
-                    <div id="scanResult" class="hidden" style="margin-top:20px;">
-                        <div id="scanResultContent"></div>
-                    </div>
-                </div>
-
-                <!-- Gate Logs -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📋 Recent Gate Logs</h3>
-                        <button class="btn btn-outline btn-sm" onclick="loadGateLogs()">Refresh</button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Visitor</th>
-                                    <th>Gate</th>
-                                    <th>Action</th>
-                                    <th>QR</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody id="gateLogsBody">
-                                <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manual Visitor Lookup for ID Verification -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h3>🪪 Manual ID Verification</h3>
-                </div>
-                <div class="flex gap-3 items-center">
-                    <div class="form-group" style="flex:1;margin-bottom:0;">
-                        <input type="number" id="manualVisitorId" class="form-control" placeholder="Enter Visitor ID">
-                    </div>
-                    <button class="btn btn-success" onclick="verifyVisitorId(true)">✓ Verify ID</button>
-                    <button class="btn btn-danger" onclick="verifyVisitorId(false)">✕ Reject</button>
-                </div>
-            </div>
+            <div class="stat-icon">🚧</div>
+          </div>
         </div>
-    </main>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="statValid">0</div>
+              <div class="stat-label">Valid Scans</div>
+            </div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="statFailed">0</div>
+              <div class="stat-label">Failed Scans</div>
+            </div>
+            <div class="stat-icon">⛔</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-row">
+            <div>
+              <div class="stat-value" id="statPending">0</div>
+              <div class="stat-label">ID Pending</div>
+            </div>
+            <div class="stat-icon">⏳</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="grid-2 mb-4">
+
+        <!-- QR Scanner Panel -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📷 QR Scanner</h3>
+            <select class="form-control" style="width:auto;padding:6px 12px;font-size:13px;" id="gateSelect">
+              <option value="GATE_1">Gate 1 — Main Entrance</option>
+              <option value="GATE_2">Gate 2 — Side Entrance</option>
+              <option value="GATE_3">Gate 3 — VIP Entrance</option>
+            </select>
+          </div>
+
+          <!-- Scan zone -->
+          <div class="scan-zone" id="scanZone" onclick="document.getElementById('qrInput').focus()">
+            <div class="scan-icon">📷</div>
+            <p>Click to focus • Scan QR or paste encrypted data</p>
+            <p style="font-size:11px;color:var(--text-faint);">Press Ctrl+V to paste</p>
+          </div>
+
+          <textarea id="qrInput" class="form-control mt-3" rows="3"
+            placeholder="Scanned / pasted QR code data appears here…"
+            style="font-family:'JetBrains Mono',monospace;font-size:12px;resize:none;"
+            oninput="onQrInput(this)"></textarea>
+
+          <div class="flex gap-2 mt-3">
+            <button class="btn btn-primary flex-1" onclick="scanQR()">🔍 Validate QR</button>
+            <button class="btn btn-outline" onclick="simulateScan()">🎯 Demo Scan</button>
+            <button class="btn btn-ghost btn-icon" onclick="clearScan()" title="Clear">✕</button>
+          </div>
+
+          <!-- Scan result -->
+          <div id="scanResult" class="hidden mt-3"></div>
+        </div>
+
+        <!-- Recent Gate Logs -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Recent Entries</h3>
+            <button class="btn btn-outline btn-sm" onclick="loadGateLogs()">⟳ Refresh</button>
+          </div>
+          <div class="table-wrapper scrollable">
+            <table>
+              <thead>
+                <tr>
+                  <th>Visitor</th>
+                  <th>Gate</th>
+                  <th>QR</th>
+                  <th>ID</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="gateLogsBody">
+                <tr><td colspan="5" class="text-center text-muted" style="padding:30px;">
+                  <div class="spinner mx-auto"></div>
+                </td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual ID Verification -->
+      <div class="card">
+        <div class="card-header">
+          <h3>🪪 Manual ID Verification</h3>
+          <span class="badge pre-registered">Guard Action Required</span>
+        </div>
+        <div class="flex gap-3 items-center flex-wrap">
+          <div style="flex:1;min-width:200px;">
+            <div class="input-group">
+              <span class="input-icon">#</span>
+              <input type="number" id="manualVisitorId" class="form-control" placeholder="Enter Visitor ID…">
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="lookupVisitor()">🔎 Lookup</button>
+          <button class="btn btn-success" onclick="verifyVisitorId(true)">✅ Approve ID</button>
+          <button class="btn btn-danger"  onclick="verifyVisitorId(false)">⛔ Reject</button>
+        </div>
+        <div id="lookupResult" class="hidden mt-3"></div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
-let validScans = 0, failedScans = 0;
+let _valid = 0, _failed = 0;
 
 document.addEventListener('DOMContentLoaded', () => { loadGateLogs(); });
 
+function onQrInput(el) {
+  const zone = document.getElementById('scanZone');
+  zone.classList.toggle('scanning', el.value.length > 10);
+}
+
+function clearScan() {
+  document.getElementById('qrInput').value = '';
+  document.getElementById('scanResult').innerHTML = '';
+  document.getElementById('scanResult').classList.add('hidden');
+  document.getElementById('scanZone').classList.remove('scanning');
+}
+
 async function loadGateLogs() {
-    const result = await API.get('/api/gate/logs/today');
-    const tbody = document.getElementById('gateLogsBody');
-    if (result.success && result.data && result.data.length > 0) {
-        document.getElementById('todayEntries').textContent = result.data.length;
-        tbody.innerHTML = result.data.slice(0, 20).map(log => `
-            <tr>
-                <td>${log.visitorName || 'Unknown'}</td>
-                <td>${log.gateId}</td>
-                <td>${getStatusBadge(log.action === 'ENTRY' ? 'CHECKED_IN_GATE' : 'CHECKED_OUT')}</td>
-                <td>${log.qrValid ? '<span class="text-success">Valid</span>' : '<span class="text-danger">Invalid</span>'}</td>
-                <td>${timeAgo(log.timestamp)}</td>
-            </tr>
-        `).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No gate logs today</td></tr>';
-    }
+  const result = await API.get('/api/gate/logs/today');
+  const tbody = document.getElementById('gateLogsBody');
+  if (!result.success || !result.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:30px;">No gate entries today</td></tr>';
+    return;
+  }
+  const logs = result.data;
+  document.getElementById('statTotal').textContent = logs.length;
+  document.getElementById('statValid').textContent  = logs.filter(l => l.qrValid).length;
+  document.getElementById('statFailed').textContent = logs.filter(l => !l.qrValid).length;
+  tbody.innerHTML = logs.slice(0, 25).map(l => `
+    <tr>
+      <td><strong>${l.visitorName || '—'}</strong></td>
+      <td><span class="mono text-sm">${l.gateId}</span></td>
+      <td>${l.qrValid
+        ? '<span class="badge success-solid">Valid</span>'
+        : '<span class="badge danger-solid">Invalid</span>'}</td>
+      <td>${l.idVerified
+        ? '<span class="text-success text-sm">✓ Done</span>'
+        : '<span class="text-muted text-sm">Pending</span>'}</td>
+      <td class="td-muted mono">${timeAgo(l.timestamp)}</td>
+    </tr>
+  `).join('');
 }
 
 async function scanQR() {
-    const qrData = document.getElementById('qrInput').value.trim();
-    if (!qrData) { Toast.error('Please enter or scan QR code data'); return; }
+  const qrData = document.getElementById('qrInput').value.trim();
+  if (!qrData) { Toast.warning('Please scan or paste QR code data'); return; }
 
-    const result = await API.post('/api/gate/scan-qr', {
-        qrData: qrData,
-        gateId: document.getElementById('gateSelect').value,
-        guardUsername: 'guard1'
-    });
+  const resultDiv = document.getElementById('scanResult');
+  resultDiv.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  resultDiv.classList.remove('hidden');
 
-    const div = document.getElementById('scanResult');
-    const content = document.getElementById('scanResultContent');
-    div.classList.remove('hidden');
+  const result = await API.post('/api/gate/scan-qr', {
+    qrData,
+    gateId: document.getElementById('gateSelect').value,
+    guardUsername: 'guard1',
+  });
 
-    if (result.success) {
-        validScans++;
-        document.getElementById('validScans').textContent = validScans;
-        content.innerHTML = `
-            <div style="padding:20px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;">
-                <h3 style="color:var(--success-light);margin-bottom:12px;">✓ Entry Validated</h3>
-                <p><strong>Visitor:</strong> ${result.data.visitor?.fullName || 'N/A'}</p>
-                <p><strong>Purpose:</strong> ${result.data.visitor?.purpose || 'N/A'}</p>
-                <p><strong>Host:</strong> ${result.data.visitor?.hostName || 'N/A'}</p>
-                <p class="mt-2 text-sm text-muted">Visitor has been notified to proceed to reception.</p>
-            </div>`;
-        Toast.success('Gate entry validated!');
-    } else {
-        failedScans++;
-        document.getElementById('failedScans').textContent = failedScans;
-        content.innerHTML = `
-            <div style="padding:20px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;">
-                <h3 style="color:var(--danger-light);margin-bottom:8px;">✕ Entry Denied</h3>
-                <p>${result.message}</p>
-            </div>`;
-        Toast.error('QR validation failed!');
-    }
-    loadGateLogs();
+  if (result.success) {
+    _valid++;
+    document.getElementById('statValid').textContent = _valid;
+    const v = result.data.visitor || {};
+    const c = avatarColor(v.fullName || '?');
+    resultDiv.innerHTML = `
+      <div class="result-box success">
+        <div class="flex items-center gap-3 mb-3">
+          <div style="width:44px;height:44px;border-radius:50%;background:${c};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;">${initials(v.fullName)}</div>
+          <div>
+            <h3 style="margin-bottom:2px;">✅ Entry Validated</h3>
+            <div style="font-size:12px;color:var(--text-muted);">Visitor allowed to proceed to reception</div>
+          </div>
+        </div>
+        <div class="visitor-info-row">
+          <div class="visitor-info-chip"><strong>Name:</strong> ${v.fullName || '—'}</div>
+          <div class="visitor-info-chip"><strong>Host:</strong> ${v.hostName || '—'}</div>
+          <div class="visitor-info-chip"><strong>Purpose:</strong> ${v.purpose || '—'}</div>
+          <div class="visitor-info-chip"><strong>Company:</strong> ${v.company || '—'}</div>
+        </div>
+      </div>`;
+    Toast.success('Gate entry validated for ' + (v.fullName || 'visitor'));
+  } else {
+    _failed++;
+    document.getElementById('statFailed').textContent = _failed;
+    resultDiv.innerHTML = `
+      <div class="result-box danger">
+        <h3>⛔ Entry Denied</h3>
+        <p style="font-size:13px;margin-top:6px;color:var(--text-secondary);">${result.message || 'QR validation failed'}</p>
+      </div>`;
+    Toast.error('QR validation failed');
+  }
+  loadGateLogs();
 }
 
 async function simulateScan() {
-    // Fetch a verified visitor and use their QR
-    const result = await API.get('/api/visitor/status/VERIFIED');
-    if (result.success && result.data && result.data.length > 0) {
-        const visitor = result.data[0];
-        if (visitor.qrCode) {
-            document.getElementById('qrInput').value = visitor.qrCode;
-            Toast.info('QR code loaded for: ' + visitor.fullName);
-        } else {
-            Toast.warning('No verified visitor with QR code found. Register a visitor first.');
-        }
-    } else {
-        Toast.warning('No verified visitors available. Please register a visitor first at /register');
+  const r = await API.get('/api/visitor/status/VERIFIED');
+  if (r.success && r.data?.length > 0) {
+    const v = r.data.find(x => x.qrCode) || r.data[0];
+    if (v?.qrCode) {
+      document.getElementById('qrInput').value = v.qrCode;
+      onQrInput(document.getElementById('qrInput'));
+      Toast.info('Loaded QR for: ' + v.fullName);
+      return;
     }
+  }
+  Toast.warning('No verified visitor with QR found — register a visitor first at /register');
 }
 
-async function verifyVisitorId(verified) {
-    const visitorId = document.getElementById('manualVisitorId').value;
-    if (!visitorId) { Toast.error('Enter a visitor ID'); return; }
+async function lookupVisitor() {
+  const id = document.getElementById('manualVisitorId').value;
+  if (!id) return;
+  const r = await API.get('/api/visitor/' + id);
+  const div = document.getElementById('lookupResult');
+  if (r.success && r.data) {
+    const v = r.data;
+    div.innerHTML = `
+      <div class="info-box info">
+        <span>🪪</span>
+        <div>
+          <strong>${v.fullName}</strong> · ${v.company || '—'}
+          &nbsp; ${getStatusBadge(v.status)}
+          <div class="text-sm mt-1 text-muted">ID: ${v.idType || '—'} ${v.idNumber || ''} · Host: ${v.hostName}</div>
+        </div>
+      </div>`;
+    div.classList.remove('hidden');
+  } else {
+    div.innerHTML = `<div class="info-box danger"><span>⚠</span>${r.message || 'Visitor not found'}</div>`;
+    div.classList.remove('hidden');
+  }
+}
 
-    const result = await API.post('/api/gate/verify-id', {
-        visitorId: visitorId,
-        gateId: document.getElementById('gateSelect').value,
-        guardUsername: 'guard1',
-        verified: verified
-    });
-
-    if (result.success) {
-        Toast.success('ID ' + (verified ? 'verified' : 'rejected'));
-    } else {
-        Toast.error(result.message);
-    }
+async function verifyVisitorId(approved) {
+  const id = document.getElementById('manualVisitorId').value;
+  if (!id) { Toast.warning('Enter a visitor ID first'); return; }
+  const r = await API.post('/api/gate/verify-id', {
+    visitorId: id,
+    gateId: document.getElementById('gateSelect').value,
+    guardUsername: 'guard1',
+    verified: approved,
+  });
+  if (r.success) Toast.success('ID ' + (approved ? 'approved ✅' : 'rejected ⛔'));
+  else Toast.error(r.message);
+  loadGateLogs();
 }
 
 function onGateEvent(data) {
-    loadGateLogs();
-    Toast.info('Gate event: ' + data.visitorName + ' at ' + data.gateId);
+  loadGateLogs();
+  Toast.info('New entry: ' + data.visitorName + ' @ ' + data.gateId);
 }
 </script>
 </body>

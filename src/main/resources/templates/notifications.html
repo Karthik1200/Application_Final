@@ -1,151 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notifications - VRGT System</title>
-    <meta name="description" content="Notification center for all alerts and system events">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Notifications</small></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Notifications</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications" class="active"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🔔 Notification Center</h1>
+      <div class="header-actions">
+        <span class="header-time" id="headerTime"></span>
+        <button class="btn btn-outline btn-sm" onclick="markAllRead()">✓ Mark All Read</button>
+        <div class="user-pill">
+          <div class="user-avatar">N</div>
+          <span class="user-name">User</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="/notifications" class="active"><span class="nav-icon">🔔</span>Notifications</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <header class="top-header">
-            <h1>🔔 Notification Center</h1>
-            <div class="header-actions">
-                <span class="header-time" id="headerTime"></span>
-                <button class="btn btn-outline btn-sm" onclick="markAllRead()">Mark All Read</button>
-                <div class="user-avatar">N</div>
-            </div>
-        </header>
+    <div class="page-content">
 
-        <div class="page-content">
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">🔔</div>
-                    <div class="stat-value" id="totalNotif">0</div>
-                    <div class="stat-label">Total Notifications</div>
-                </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon">⚠</div>
-                    <div class="stat-value" id="alertNotif">0</div>
-                    <div class="stat-label">Security Alerts</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon">👤</div>
-                    <div class="stat-value" id="visitorNotif">0</div>
-                    <div class="stat-label">Visitor Updates</div>
-                </div>
-                <div class="stat-card info">
-                    <div class="stat-icon">📩</div>
-                    <div class="stat-value" id="unreadNotif">0</div>
-                    <div class="stat-label">Unread</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3>📨 All Notifications</h3>
-                    <button class="btn btn-outline btn-sm" onclick="loadNotifications()">⟳ Refresh</button>
-                </div>
-                <div id="notificationsList">
-                    <p class="text-muted text-sm" style="padding:20px;">Loading...</p>
-                </div>
-            </div>
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card primary">
+          <div class="stat-row">
+            <div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div>
+            <div class="stat-icon">🔔</div>
+          </div>
         </div>
-    </main>
+        <div class="stat-card info">
+          <div class="stat-row">
+            <div><div class="stat-value" id="statUnread">0</div><div class="stat-label">Unread</div></div>
+            <div class="stat-icon">📩</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div><div class="stat-value" id="statAlerts">0</div><div class="stat-label">Security Alerts</div></div>
+            <div class="stat-icon">⚠</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div><div class="stat-value" id="statVisitor">0</div><div class="stat-label">Visitor Events</div></div>
+            <div class="stat-icon">👤</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar mb-4">
+        <div class="search-input" style="max-width:260px;">
+          <span class="icon">🔍</span>
+          <input type="text" id="notifSearch" placeholder="Search notifications…" oninput="filterNotifs(this.value)">
+        </div>
+        <button class="filter-chip active" data-type="all" onclick="filterByType(this)">All</button>
+        <button class="filter-chip" data-type="gate" onclick="filterByType(this)">Gate</button>
+        <button class="filter-chip" data-type="reception" onclick="filterByType(this)">Reception</button>
+        <button class="filter-chip" data-type="alert" onclick="filterByType(this)">Alerts</button>
+        <button class="filter-chip" data-type="meeting" onclick="filterByType(this)">Meetings</button>
+        <div style="margin-left:auto;">
+          <button class="btn btn-outline btn-sm" onclick="loadNotifications()">⟳ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Notifications List -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="notif-list" id="notifList">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
+let _allNotifs = [];
+let _activeType = 'all';
+
+const _iconMap = {
+  VISITOR_AT_GATE:           { icon:'🚧', cls:'gate',      label:'Gate Entry' },
+  VISITOR_AT_RECEPTION:      { icon:'🛎', cls:'reception', label:'Reception' },
+  VISITOR_EN_ROUTE:          { icon:'🗺', cls:'reception', label:'En Route' },
+  VISITOR_AT_MEETING_ROOM:   { icon:'🚪', cls:'meeting',   label:'Meeting Room' },
+  HOST_CONFIRMATION_REQUIRED:{ icon:'❓', cls:'system',    label:'Confirmation' },
+  RESTRICTED_ZONE_ALERT:     { icon:'⚠', cls:'alert',     label:'Restricted Zone' },
+  TIMEOUT_ALERT:             { icon:'⏰', cls:'alert',     label:'Timeout' },
+  EMERGENCY:                 { icon:'🚨', cls:'alert',     label:'Emergency' },
+  MEETING_EXTENDED:          { icon:'⏱', cls:'meeting',   label:'Meeting Extended' },
+  MEETING_TERMINATED:        { icon:'⏹', cls:'meeting',   label:'Meeting Ended' },
+  VISITOR_CHECKED_OUT:       { icon:'👋', cls:'system',    label:'Checked Out' },
+};
+
 document.addEventListener('DOMContentLoaded', loadNotifications);
 
 async function loadNotifications() {
-    const result = await API.get('/api/admin/notifications');
-    const container = document.getElementById('notificationsList');
+  const r = await API.get('/api/admin/notifications');
+  if (!r.success || !r.data) return;
 
-    if (result.success && result.data && result.data.length > 0) {
-        const notifs = result.data;
-        document.getElementById('totalNotif').textContent = notifs.length;
-        document.getElementById('alertNotif').textContent = notifs.filter(n =>
-            n.alertType === 'RESTRICTED_ZONE_ALERT' || n.alertType === 'EMERGENCY' || n.alertType === 'TIMEOUT_ALERT').length;
-        document.getElementById('visitorNotif').textContent = notifs.filter(n =>
-            n.alertType === 'VISITOR_AT_GATE' || n.alertType === 'VISITOR_AT_RECEPTION').length;
-        document.getElementById('unreadNotif').textContent = notifs.filter(n => !n.read).length;
+  _allNotifs = r.data;
 
-        container.innerHTML = notifs.map(n => {
-            const iconMap = {
-                'VISITOR_AT_GATE': { icon: '🚧', bg: 'rgba(59,130,246,0.15)' },
-                'VISITOR_AT_RECEPTION': { icon: '🛎', bg: 'rgba(245,158,11,0.15)' },
-                'VISITOR_EN_ROUTE': { icon: '🗺', bg: 'rgba(168,85,247,0.15)' },
-                'VISITOR_AT_MEETING_ROOM': { icon: '🚪', bg: 'rgba(16,185,129,0.15)' },
-                'HOST_CONFIRMATION_REQUIRED': { icon: '❓', bg: 'rgba(99,102,241,0.15)' },
-                'RESTRICTED_ZONE_ALERT': { icon: '⚠', bg: 'rgba(239,68,68,0.15)' },
-                'TIMEOUT_ALERT': { icon: '⏰', bg: 'rgba(245,158,11,0.15)' },
-                'EMERGENCY': { icon: '🚨', bg: 'rgba(239,68,68,0.2)' },
-                'MEETING_EXTENDED': { icon: '⏱', bg: 'rgba(6,182,212,0.15)' },
-                'MEETING_TERMINATED': { icon: '⏹', bg: 'rgba(100,116,139,0.15)' },
-                'VISITOR_CHECKED_OUT': { icon: '👋', bg: 'rgba(100,116,139,0.15)' }
-            };
-            const info = iconMap[n.alertType] || { icon: '🔔', bg: 'rgba(99,102,241,0.15)' };
+  // Stats
+  document.getElementById('statTotal').textContent  = _allNotifs.length;
+  document.getElementById('statUnread').textContent  = _allNotifs.filter(n => !n.read).length;
+  document.getElementById('statAlerts').textContent  = _allNotifs.filter(n => ['RESTRICTED_ZONE_ALERT','EMERGENCY','TIMEOUT_ALERT'].includes(n.alertType)).length;
+  document.getElementById('statVisitor').textContent = _allNotifs.filter(n => n.alertType?.startsWith('VISITOR')).length;
 
-            return `
-                <div class="notification-item ${n.read ? '' : 'unread'}" onclick="markRead(${n.id})">
-                    <div class="notif-icon" style="background:${info.bg}">${info.icon}</div>
-                    <div class="notif-content">
-                        <h4>${n.title}</h4>
-                        <p>${n.message}</p>
-                        ${n.visitorName ? `<p class="text-sm" style="margin-top:4px;">Visitor: <strong>${n.visitorName}</strong></p>` : ''}
-                    </div>
-                    <span class="notif-time">${n.createdAt ? timeAgo(n.createdAt) : ''}</span>
-                </div>
-            `;
-        }).join('');
-    } else {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="icon">🔔</div>
-                <h3>No Notifications</h3>
-                <p class="text-sm text-muted">Notifications will appear here as visitors move through the system</p>
-            </div>
-        `;
-    }
+  renderNotifs(_allNotifs);
 }
 
-async function markRead(id) {
-    await API.post('/api/admin/notifications/' + id + '/read');
-    loadNotifications();
+function filterByType(btn) {
+  document.querySelectorAll('.filter-chip[data-type]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _activeType = btn.dataset.type;
+  applyFilters();
+}
+
+function filterNotifs(q) { applyFilters(); }
+
+function applyFilters() {
+  const q    = document.getElementById('notifSearch').value.toLowerCase();
+  const type = _activeType;
+
+  let list = _allNotifs;
+
+  if (type !== 'all') {
+    list = list.filter(n => {
+      const cls = (_iconMap[n.alertType] || {}).cls || 'system';
+      return cls === type;
+    });
+  }
+  if (q) {
+    list = list.filter(n =>
+      [n.title, n.message, n.visitorName, n.alertType].join(' ').toLowerCase().includes(q)
+    );
+  }
+  renderNotifs(list);
+}
+
+function renderNotifs(list) {
+  const div = document.getElementById('notifList');
+  if (!list.length) {
+    div.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔔</div>
+      <h3>No notifications</h3>
+      <p>Events will appear here as visitors move through the system</p>
+    </div>`;
+    return;
+  }
+  div.innerHTML = list.map(n => {
+    const info = _iconMap[n.alertType] || { icon:'🔔', cls:'system', label:'System' };
+    return `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead(${n.id}, this)">
+      <div class="notif-icon ${info.cls}">${info.icon}</div>
+      <div class="notif-body">
+        <div class="notif-title">${n.title || info.label}</div>
+        <div class="notif-msg">${n.message || '—'}</div>
+        ${n.visitorName ? `<div class="notif-msg mt-1" style="color:var(--primary-light);">👤 ${n.visitorName}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        <div class="notif-time">${n.createdAt ? timeAgo(n.createdAt) : '—'}</div>
+        <span class="badge ${info.cls === 'alert' ? 'alert' : info.cls === 'meeting' ? 'in-meeting' : 'pre-registered'}" style="font-size:10px;">${info.label}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function markRead(id, row) {
+  await API.post('/api/admin/notifications/' + id + '/read');
+  row?.classList.remove('unread');
+  document.getElementById('statUnread').textContent =
+    Math.max(0, parseInt(document.getElementById('statUnread').textContent) - 1);
 }
 
 async function markAllRead() {
-    Toast.info('Marking all as read...');
-    const result = await API.get('/api/admin/notifications');
-    if (result.success && result.data) {
-        for (const n of result.data.filter(n => !n.read)) {
-            await API.post('/api/admin/notifications/' + n.id + '/read');
-        }
-    }
-    loadNotifications();
-    Toast.success('All notifications marked as read');
+  const unread = _allNotifs.filter(n => !n.read);
+  if (!unread.length) { Toast.info('All already read'); return; }
+  setLoading(event.target, 'Marking…');
+  for (const n of unread) await API.post('/api/admin/notifications/' + n.id + '/read');
+  await loadNotifications();
+  Toast.success('All notifications marked as read');
 }
 </script>
 </body>

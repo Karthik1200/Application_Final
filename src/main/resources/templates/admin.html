@@ -1,340 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - VRGT System</title>
-    <meta name="description" content="Administrative dashboard with real-time analytics, heatmaps, and exportable logs">
-    <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="app-layout">
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">🏢</div>
-            <div><h2>VRGT System</h2><small>Admin Panel</small></div>
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Admin Panel</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin" class="active"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>📊 Admin Dashboard</h1>
+      <div class="header-actions">
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">A</div>
+          <span class="user-name">Admin</span>
         </div>
-        <ul class="sidebar-nav">
-            <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-            <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-            <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
-            <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
-            <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-            <li><a href="/admin" class="active"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
-            <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
-            <li><a href="#" onclick="logout()"><span class="nav-icon">🚪</span>Logout</a></li>
-        </ul>
-    </aside>
+      </div>
+    </header>
 
-    <main class="main-content">
-        <header class="top-header">
-            <h1>📊 Admin Dashboard</h1>
-            <div class="header-actions">
-                <span class="header-time" id="headerTime"></span>
-                <div class="notification-bell" onclick="window.location.href='/notifications'">🔔<span class="count" style="display:none">0</span></div>
-                <div class="user-avatar">A</div>
-            </div>
-        </header>
+    <div class="page-content">
 
-        <div class="page-content">
-            <!-- KPI Stats -->
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-value" id="statTotalToday">0</div>
-                    <div class="stat-label">Visitors Today</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-icon">🟢</div>
-                    <div class="stat-value" id="statActive">0</div>
-                    <div class="stat-label">Active Now</div>
-                </div>
-                <div class="stat-card info">
-                    <div class="stat-icon">🚧</div>
-                    <div class="stat-value" id="statGate">0</div>
-                    <div class="stat-label">At Gate</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-icon">🛎</div>
-                    <div class="stat-value" id="statReception">0</div>
-                    <div class="stat-label">At Reception</div>
-                </div>
-                <div class="stat-card secondary">
-                    <div class="stat-icon">📍</div>
-                    <div class="stat-value" id="statMeeting">0</div>
-                    <div class="stat-label">In Meetings</div>
-                </div>
-                <div class="stat-card danger">
-                    <div class="stat-icon">🚪</div>
-                    <div class="stat-value" id="statRooms">0</div>
-                    <div class="stat-label">Available Rooms</div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="grid-2 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📈 Visitor Trends (7 Days)</h3>
-                    </div>
-                    <canvas id="visitorTrendChart" height="250"></canvas>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🔥 Location Heatmap</h3>
-                    </div>
-                    <canvas id="heatmapChart" height="250"></canvas>
-                </div>
-            </div>
-
-            <!-- Activity & Audit -->
-            <div class="grid-2-1">
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📋 All Visitors</h3>
-                        <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm" onclick="exportData('pdf')">📄 PDF</button>
-                            <button class="btn btn-outline btn-sm" onclick="exportData('excel')">📊 Excel</button>
-                            <button class="btn btn-outline btn-sm" onclick="loadAllVisitors()">⟳</button>
-                        </div>
-                    </div>
-                    <div class="table-wrapper" style="max-height:400px; overflow-y:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Company</th>
-                                    <th>Host</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                    <th>Arrived</th>
-                                </tr>
-                            </thead>
-                            <tbody id="allVisitorsBody">
-                                <tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Audit Trail -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>🔍 Audit Trail</h3>
-                    </div>
-                    <div id="auditTrail" style="max-height:400px; overflow-y:auto;">
-                        <p class="text-muted text-sm">Loading...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Real-time Floor Map (mini) -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h3>🗺 Live Floor Map</h3>
-                    <a href="/tracking" class="btn btn-outline btn-sm">Open Full View →</a>
-                </div>
-                <div class="map-svg-wrapper" style="min-height:300px;">
-                    <svg viewBox="0 0 900 350" id="miniMap">
-                        <rect x="20" y="20" width="860" height="310" rx="8" fill="none" stroke="rgba(99,102,241,0.15)" stroke-width="1"/>
-                        <rect x="30" y="130" width="80" height="60" rx="6" fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.2)"/>
-                        <text x="70" y="160" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">GATE</text>
-                        <rect x="150" y="120" width="100" height="80" rx="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.2)"/>
-                        <text x="200" y="160" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">RECEPTION</text>
-                        <rect x="320" y="60" width="100" height="60" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)"/>
-                        <text x="370" y="90" text-anchor="middle" fill="#34d399" font-size="9">MR-101</text>
-                        <rect x="320" y="140" width="100" height="60" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)"/>
-                        <text x="370" y="170" text-anchor="middle" fill="#34d399" font-size="9">MR-102</text>
-                        <rect x="320" y="220" width="100" height="60" rx="6" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.2)"/>
-                        <text x="370" y="250" text-anchor="middle" fill="#34d399" font-size="9">MR-103</text>
-                        <rect x="480" y="60" width="100" height="60" rx="6" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.2)"/>
-                        <text x="530" y="90" text-anchor="middle" fill="#22d3ee" font-size="9">MR-201</text>
-                        <rect x="480" y="140" width="100" height="60" rx="6" fill="rgba(6,182,212,0.08)" stroke="rgba(6,182,212,0.2)"/>
-                        <text x="530" y="170" text-anchor="middle" fill="#22d3ee" font-size="9">MR-202</text>
-                        <rect x="680" y="200" width="120" height="80" rx="6" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.3)" stroke-dasharray="4 2"/>
-                        <text x="740" y="240" text-anchor="middle" fill="#f87171" font-size="10" font-weight="600">⚠ RESTRICTED</text>
-                        <g id="miniMapDots"></g>
-                    </svg>
-                </div>
-            </div>
+      <!-- KPIs -->
+      <div class="stats-grid mb-4" style="grid-template-columns:repeat(6,1fr);">
+        <div class="stat-card primary">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s1">0</div><div class="stat-label">Visitors Today</div></div>
+            <div class="stat-icon">👥</div>
+          </div>
         </div>
-    </main>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s2">0</div><div class="stat-label">Active Now</div></div>
+            <div class="stat-icon">🟢</div>
+          </div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s3">0</div><div class="stat-label">At Gate</div></div>
+            <div class="stat-icon">🚧</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s4">0</div><div class="stat-label">Reception</div></div>
+            <div class="stat-icon">🛎</div>
+          </div>
+        </div>
+        <div class="stat-card secondary">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s5">0</div><div class="stat-label">In Meetings</div></div>
+            <div class="stat-icon">📍</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div><div class="stat-value" id="s6">0</div><div class="stat-label">Free Rooms</div></div>
+            <div class="stat-icon">🚪</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="tabOverview">📊 Overview</button>
+          <button class="tab-btn" data-tab="tabVisitors">👥 Visitors</button>
+          <button class="tab-btn" data-tab="tabGate">🚧 Gate Logs</button>
+          <button class="tab-btn" data-tab="tabAudit">🔍 Audit Trail</button>
+          <button class="tab-btn" data-tab="tabBlacklist">⛔ Blacklist</button>
+          <button class="tab-btn" data-tab="tabExport">💾 Export</button>
+        </div>
+      </div>
+
+      <!-- Tab: Overview -->
+      <div class="tab-panel active" id="tabOverview">
+        <div class="grid-2 mb-4">
+          <div class="card">
+            <div class="card-header"><h3>📈 Visitor Trend (7 Days)</h3></div>
+            <canvas id="trendChart" height="220"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>🔥 Location Heatmap</h3></div>
+            <canvas id="heatChart" height="220"></canvas>
+          </div>
+        </div>
+        <!-- Mini live map -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🗺 Live Floor Map</h3>
+            <a href="/tracking" class="btn btn-outline btn-sm">Full View →</a>
+          </div>
+          <div class="map-svg-wrapper" style="min-height:260px;">
+            <svg viewBox="0 0 900 260" id="miniMap">
+              <rect x="20" y="20" width="860" height="220" rx="8" fill="none" stroke="rgba(99,102,241,0.12)" stroke-width="1"/>
+              <rect x="30" y="90" width="90" height="60" rx="6" fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.2)"/>
+              <text x="75" y="120" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">GATE</text>
+              <rect x="150" y="75" width="110" height="80" rx="6" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.2)"/>
+              <text x="205" y="117" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="600">RECEPTION</text>
+              <rect x="310" y="50" width="110" height="60" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.2)"/>
+              <text x="365" y="82" text-anchor="middle" fill="#34d399" font-size="9">MR-101</text>
+              <rect x="310" y="130" width="110" height="60" rx="6" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.2)"/>
+              <text x="365" y="162" text-anchor="middle" fill="#34d399" font-size="9">MR-102</text>
+              <rect x="450" y="50" width="110" height="60" rx="6" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.2)"/>
+              <text x="505" y="82" text-anchor="middle" fill="#22d3ee" font-size="9">MR-201</text>
+              <rect x="450" y="130" width="110" height="60" rx="6" fill="rgba(6,182,212,0.06)" stroke="rgba(6,182,212,0.2)"/>
+              <text x="505" y="162" text-anchor="middle" fill="#22d3ee" font-size="9">MR-202</text>
+              <rect x="700" y="130" width="130" height="80" rx="6" fill="rgba(239,68,68,0.04)" stroke="rgba(239,68,68,0.3)" stroke-dasharray="4 2"/>
+              <text x="765" y="175" text-anchor="middle" fill="#f87171" font-size="10" font-weight="600">⚠ RESTRICTED</text>
+              <g id="miniDots"></g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Visitors -->
+      <div class="tab-panel" id="tabVisitors">
+        <div class="card">
+          <div class="card-header">
+            <h3>👥 All Visitors</h3>
+            <div class="card-actions">
+              <div class="search-input" style="width:220px;">
+                <span class="icon">🔍</span>
+                <input type="text" id="visitorSearch" placeholder="Search…" oninput="filterVisitorTable(this.value)">
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="loadAllVisitors()">⟳</button>
+            </div>
+          </div>
+          <div class="table-wrapper scrollable">
+            <table>
+              <thead>
+                <tr>
+                  <th>Visitor</th>
+                  <th>Company</th>
+                  <th>Host</th>
+                  <th>Purpose</th>
+                  <th>Status</th>
+                  <th>ID Type</th>
+                  <th>Arrived</th>
+                </tr>
+              </thead>
+              <tbody id="visitorsBody">
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Gate Logs -->
+      <div class="tab-panel" id="tabGate">
+        <div class="card">
+          <div class="card-header">
+            <h3>🚧 Today's Gate Logs</h3>
+            <button class="btn btn-outline btn-sm" onclick="loadGateData()">⟳ Refresh</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Visitor</th><th>Gate</th><th>Action</th><th>QR</th><th>ID Verified</th><th>By</th><th>Time</th></tr>
+              </thead>
+              <tbody id="gateBody">
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Audit -->
+      <div class="tab-panel" id="tabAudit">
+        <div class="card">
+          <div class="card-header">
+            <h3>🔍 Audit Trail</h3>
+            <div class="card-actions">
+              <div class="search-input" style="width:220px;">
+                <span class="icon">🔍</span>
+                <input type="text" id="auditSearch" placeholder="Search audit…" oninput="filterAudit(this.value)">
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="loadAuditData()">⟳</button>
+            </div>
+          </div>
+          <div class="timeline" id="auditTimeline">
+            <div class="loading-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Blacklist -->
+      <div class="tab-panel" id="tabBlacklist">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3>⛔ Blacklist Management</h3>
+            <button class="btn btn-danger btn-sm" onclick="openBlacklistModal()">+ Add Entry</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Phone</th><th>ID Number</th><th>Reason</th><th>Added By</th><th>Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="blacklistBody">
+                <tr><td colspan="8" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Export -->
+      <div class="tab-panel" id="tabExport">
+        <div class="grid-3">
+          <!-- Visitors -->
+          <div class="card">
+            <div class="card-header"><h3>👥 Visitor Log</h3></div>
+            <p class="text-sm text-muted mb-4">Export complete visitor registry with status, check-in/out times and host details.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-danger btn-block" onclick="exportFile('/api/admin/export/visitors/pdf','visitors.pdf')">📄 Export PDF</button>
+              <button class="btn btn-success btn-block" onclick="exportFile('/api/admin/export/visitors/excel','visitors.xlsx')">📊 Export Excel</button>
+            </div>
+          </div>
+
+          <!-- Gate Logs -->
+          <div class="card">
+            <div class="card-header"><h3>🚧 Gate Logs</h3></div>
+            <p class="text-sm text-muted mb-4">Export all gate entry/exit events with QR validation and ID verification records.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-danger btn-block" onclick="exportFile('/api/admin/export/gate-logs/pdf','gate-logs.pdf')">📄 Export PDF</button>
+              <button class="btn btn-success btn-block" onclick="exportFile('/api/admin/export/gate-logs/excel','gate-logs.xlsx')">📊 Export Excel</button>
+            </div>
+          </div>
+
+          <!-- Audit Trail -->
+          <div class="card">
+            <div class="card-header"><h3>🔍 Audit Trail</h3></div>
+            <p class="text-sm text-muted mb-4">Export full audit trail with who performed each action, timestamps and change records.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-danger btn-block" onclick="exportFile('/api/admin/export/audit-logs/pdf','audit-trail.pdf')">📄 Export PDF</button>
+              <button class="btn btn-success btn-block" onclick="exportFile('/api/admin/export/audit-logs/excel','audit-trail.xlsx')">📊 Export Excel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<!-- Blacklist Modal -->
+<div id="blacklistModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⛔ Add to Blacklist</h3>
+      <button class="modal-close" onclick="closeBlacklistModal()">×</button>
+    </div>
+    <div id="blError" class="info-box danger hidden mb-3"></div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="blName" class="form-control" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="blEmail" class="form-control" placeholder="email@example.com">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="tel" id="blPhone" class="form-control" placeholder="+91 …">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ID Number</label>
+        <input type="text" id="blId" class="form-control" placeholder="Aadhar / Passport / DL">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reason *</label>
+      <textarea id="blReason" class="form-control" rows="3" placeholder="Reason for blacklisting…" required></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeBlacklistModal()">Cancel</button>
+      <button class="btn btn-danger" id="blSaveBtn" onclick="saveBlacklist()">⛔ Add to Blacklist</button>
+    </div>
+  </div>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
-let visitorTrendChart, heatmapChart;
+let _trendChart, _heatChart;
+let _allVisitors = [], _allAudit = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
-    loadAllVisitors();
-    loadAuditTrail();
-    loadVisitorTrends();
-    loadHeatmap();
-    loadMiniMap();
-    setInterval(loadDashboard, 10000);
-    setInterval(loadMiniMap, 5000);
+  // Tabs
+  initTabs('.tab-btn', '.tab-panel');
+
+  // Tab-specific loading
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      if (tab === 'tabVisitors')  loadAllVisitors();
+      if (tab === 'tabGate')      loadGateData();
+      if (tab === 'tabAudit')     loadAuditData();
+      if (tab === 'tabBlacklist') loadBlacklist();
+    });
+  });
+
+  loadDashboard();
+  loadCharts();
+  loadMiniMap();
+  setInterval(loadDashboard, 10000);
+  setInterval(loadMiniMap, 6000);
 });
 
 async function loadDashboard() {
-    const result = await API.get('/api/admin/dashboard-stats');
-    if (!result.success || !result.data) return;
-    const d = result.data;
-    document.getElementById('statTotalToday').textContent = d.totalVisitorsToday;
-    document.getElementById('statActive').textContent = d.activeVisitors;
-    document.getElementById('statGate').textContent = d.pendingAtGate;
-    document.getElementById('statReception').textContent = d.pendingAtReception;
-    document.getElementById('statMeeting').textContent = d.inMeetings;
-    document.getElementById('statRooms').textContent = d.availableRooms;
+  const r = await API.get('/api/admin/dashboard-stats');
+  if (!r.success || !r.data) return;
+  const d = r.data;
+  document.getElementById('s1').textContent = d.totalVisitorsToday;
+  document.getElementById('s2').textContent = d.activeVisitors;
+  document.getElementById('s3').textContent = d.pendingAtGate;
+  document.getElementById('s4').textContent = d.pendingAtReception;
+  document.getElementById('s5').textContent = d.inMeetings;
+  document.getElementById('s6').textContent = d.availableRooms;
 }
 
-async function loadAllVisitors() {
-    const result = await API.get('/api/visitor/all');
-    const tbody = document.getElementById('allVisitorsBody');
-    if (result.success && result.data && result.data.length > 0) {
-        tbody.innerHTML = result.data.map(v => `
-            <tr>
-                <td>#${v.id}</td>
-                <td><strong>${v.fullName}</strong></td>
-                <td>${v.company || '—'}</td>
-                <td>${v.hostName}</td>
-                <td>${v.purpose || '—'}</td>
-                <td>${getStatusBadge(v.status)}</td>
-                <td>${v.gateCheckedInAt ? timeAgo(v.gateCheckedInAt) : (v.createdAt ? timeAgo(v.createdAt) : '—')}</td>
-            </tr>
-        `).join('');
-    } else {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No visitors found</td></tr>';
-    }
-}
+async function loadCharts() {
+  // Trend
+  const tr = await API.get('/api/admin/analytics/visitors?days=7');
+  const ctx1 = document.getElementById('trendChart').getContext('2d');
+  const labels = tr.data?.map(d => d.date) || ['Today'];
+  const values = tr.data?.map(d => d.count) || [0];
+  _trendChart = new Chart(ctx1, {
+    type: 'line',
+    data: { labels, datasets: [{ label:'Visitors', data: values, borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.1)', fill:true, tension:0.4, pointBackgroundColor:'#818cf8', pointRadius:5 }] },
+    options: { responsive:true, plugins:{legend:{display:false}}, scales: { y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b'}}, x:{grid:{display:false},ticks:{color:'#64748b'}} } }
+  });
 
-async function loadAuditTrail() {
-    const result = await API.get('/api/admin/audit-logs');
-    const div = document.getElementById('auditTrail');
-    if (result.success && result.data && result.data.length > 0) {
-        div.innerHTML = `<div class="timeline">${result.data.slice(0, 20).map(log => `
-            <div class="timeline-item">
-                <div class="time">${log.timestamp ? timeAgo(log.timestamp) : '—'}</div>
-                <div class="content">
-                    <strong>${log.eventType}</strong>
-                    <p class="text-sm text-muted">${log.description || ''}</p>
-                    <p class="text-sm text-muted">By: ${log.performedBy || 'System'}</p>
-                </div>
-            </div>
-        `).join('')}</div>`;
-    } else {
-        div.innerHTML = '<p class="text-muted text-sm" style="padding:12px;">No audit logs yet</p>';
-    }
-}
-
-async function loadVisitorTrends() {
-    const result = await API.get('/api/admin/analytics/visitors?days=7');
-    if (!result.success || !result.data) return;
-
-    const labels = result.data.map(d => d.date);
-    const values = result.data.map(d => d.count);
-
-    const ctx = document.getElementById('visitorTrendChart').getContext('2d');
-    visitorTrendChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels.length > 0 ? labels : ['Today'],
-            datasets: [{
-                label: 'Visitors',
-                data: values.length > 0 ? values : [0],
-                borderColor: '#6366f1',
-                backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#818cf8',
-                pointRadius: 5,
-                pointHoverRadius: 7
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: '#64748b' } }
-            }
-        }
-    });
-}
-
-async function loadHeatmap() {
-    const result = await API.get('/api/tracking/heatmap');
-    const ctx = document.getElementById('heatmapChart').getContext('2d');
-
-    const labels = result.success && result.data && result.data.length > 0
-        ? result.data.map(d => d.location)
-        : ['GATE', 'LOBBY', 'RECEPTION', 'CORRIDOR', 'MEETING_ROOM'];
-    const values = result.success && result.data && result.data.length > 0
-        ? result.data.map(d => d.count)
-        : [8, 5, 12, 3, 7];
-
-    heatmapChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Visits',
-                data: values,
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.6)',
-                    'rgba(168, 85, 247, 0.6)',
-                    'rgba(245, 158, 11, 0.6)',
-                    'rgba(99, 102, 241, 0.6)',
-                    'rgba(16, 185, 129, 0.6)',
-                ],
-                borderColor: [
-                    '#3b82f6', '#a855f7', '#f59e0b', '#6366f1', '#10b981'
-                ],
-                borderWidth: 1,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } }
-            }
-        }
-    });
+  // Heatmap
+  const hr = await API.get('/api/tracking/heatmap');
+  const ctx2 = document.getElementById('heatChart').getContext('2d');
+  const hl = hr.data?.map(d => d.location) || ['GATE','LOBBY','RECEPTION','CORRIDOR','MEETING_ROOM'];
+  const hv = hr.data?.map(d => d.count) || [8,5,12,3,7];
+  _heatChart = new Chart(ctx2, {
+    type:'bar',
+    data:{ labels:hl, datasets:[{ label:'Visits', data:hv,
+      backgroundColor:['rgba(99,102,241,0.6)','rgba(6,182,212,0.6)','rgba(245,158,11,0.6)','rgba(16,185,129,0.6)','rgba(168,85,247,0.6)'],
+      borderRadius:6 }] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b'}}, x:{grid:{display:false},ticks:{color:'#64748b',font:{size:10}}} } }
+  });
 }
 
 async function loadMiniMap() {
-    const result = await API.get('/api/tracking/all-locations');
-    if (!result.success || !result.data) return;
-
-    const dotsGroup = document.getElementById('miniMapDots');
-    const positions = {
-        'CHECKED_IN_GATE': { x: 70, y: 160 },
-        'AT_RECEPTION': { x: 200, y: 160 },
-        'HOST_CONFIRMED': { x: 200, y: 155 },
-        'EN_ROUTE': { x: 280, y: 160 },
-        'IN_MEETING': { x: 370, y: 130 }
-    };
-
-    dotsGroup.innerHTML = result.data.map((v, i) => {
-        const pos = positions[v.status] || { x: 120, y: 200 };
-        const offset = i * 15;
-        const color = v.restricted ? '#ef4444' : (v.status === 'IN_MEETING' ? '#10b981' : '#6366f1');
-        return `
-            <circle cx="${pos.x + offset % 40}" cy="${pos.y + (offset % 20) - 10}" r="5"
-                    fill="${color}" class="visitor-dot" style="animation-delay:${i * 0.2}s"/>
-        `;
-    }).join('');
+  const r = await API.get('/api/tracking/all-locations');
+  if (!r.success || !r.data) return;
+  const pos = { CHECKED_IN_GATE:{x:75,y:120}, AT_RECEPTION:{x:205,y:117}, HOST_CONFIRMED:{x:205,y:112}, EN_ROUTE:{x:300,y:115}, IN_MEETING:{x:365,y:115} };
+  document.getElementById('miniDots').innerHTML = r.data.map((v,i) => {
+    const p = pos[v.status] || {x:130,y:150};
+    const color = v.restricted ? '#ef4444' : (v.status==='IN_MEETING'?'#10b981':'#6366f1');
+    return `<circle cx="${p.x+(i%4)*12}" cy="${p.y+(Math.floor(i/4)*12)-6}" r="5" fill="${color}" class="visitor-dot" style="animation-delay:${i*0.2}s"/>`;
+  }).join('');
 }
 
-function exportData(format) {
-    Toast.info('Export to ' + format.toUpperCase() + ' — Feature available with backend integration');
+// Visitors tab
+async function loadAllVisitors() {
+  const r = await API.get('/api/visitor/all');
+  _allVisitors = r.data || [];
+  renderVisitorTable(_allVisitors);
+}
+
+function filterVisitorTable(q) {
+  const list = !q ? _allVisitors : _allVisitors.filter(v =>
+    [v.fullName, v.company, v.hostName, v.status, v.purpose].join(' ').toLowerCase().includes(q.toLowerCase())
+  );
+  renderVisitorTable(list);
+}
+
+function renderVisitorTable(list) {
+  const tbody = document.getElementById('visitorsBody');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No visitors found</td></tr>'; return; }
+  tbody.innerHTML = list.map(v => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:${avatarColor(v.fullName)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">${initials(v.fullName)}</div>
+          <div><div style="font-weight:600;font-size:13px;">${v.fullName}</div><div class="text-xs text-muted">#${v.id}</div></div>
+        </div>
+      </td>
+      <td class="td-muted">${v.company||'—'}</td>
+      <td>${v.hostName}</td>
+      <td class="td-muted">${v.purpose||'—'}</td>
+      <td>${getStatusBadge(v.status)}</td>
+      <td class="td-muted">${v.idType||'—'}</td>
+      <td class="td-muted mono">${v.gateCheckedInAt ? timeAgo(v.gateCheckedInAt) : v.createdAt ? timeAgo(v.createdAt) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// Gate tab
+async function loadGateData() {
+  const r = await API.get('/api/gate/logs/today');
+  const tbody = document.getElementById('gateBody');
+  if (!r.success || !r.data?.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No gate logs today</td></tr>'; return; }
+  tbody.innerHTML = r.data.map(l => `
+    <tr>
+      <td><strong>${l.visitorName||'—'}</strong></td>
+      <td><span class="mono text-sm">${l.gateId}</span></td>
+      <td>${l.action === 'ENTRY' ? '<span class="badge at-gate">ENTRY</span>' : '<span class="badge checked-out">EXIT</span>'}</td>
+      <td>${l.qrValid ? '<span class="badge success-solid">Valid</span>' : '<span class="badge danger-solid">Invalid</span>'}</td>
+      <td>${l.idVerified ? '<span class="text-success text-sm">✓ Yes</span>' : '<span class="text-muted text-sm">No</span>'}</td>
+      <td class="td-muted">${l.verifiedBy||'—'}</td>
+      <td class="td-muted mono">${timeAgo(l.timestamp)}</td>
+    </tr>
+  `).join('');
+}
+
+// Audit tab
+async function loadAuditData() {
+  const r = await API.get('/api/admin/audit-logs');
+  _allAudit = r.data || [];
+  renderAudit(_allAudit);
+}
+
+function filterAudit(q) {
+  const list = !q ? _allAudit : _allAudit.filter(a =>
+    [a.eventType,a.description,a.performedBy,a.entityType].join(' ').toLowerCase().includes(q.toLowerCase())
+  );
+  renderAudit(list);
+}
+
+function renderAudit(logs) {
+  const div = document.getElementById('auditTimeline');
+  if (!logs.length) { div.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>No audit logs</h3></div>'; return; }
+  div.innerHTML = logs.slice(0,50).map(l => `
+    <div class="timeline-item">
+      <div class="ti-time">${l.timestamp ? fmtTime(l.timestamp) : '—'}</div>
+      <div class="ti-event">${l.eventType} <span class="badge pre-registered" style="font-size:10px;">${l.entityType}</span></div>
+      <div class="ti-desc">${l.description || '—'}</div>
+      <div class="ti-by">By: ${l.performedBy || 'System'} ${l.performedByRole ? '('+l.performedByRole+')' : ''}</div>
+    </div>
+  `).join('');
+}
+
+// Blacklist tab
+async function loadBlacklist() {
+  const r = await API.get('/api/blacklist');
+  const tbody = document.getElementById('blacklistBody');
+  if (!r.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted" style="padding:24px;">No blacklist entries</td></tr>';
+    return;
+  }
+  tbody.innerHTML = r.data.map(b => `
+    <tr>
+      <td><strong>${b.fullName||'—'}</strong></td>
+      <td class="td-muted">${b.email||'—'}</td>
+      <td class="td-muted">${b.phone||'—'}</td>
+      <td class="mono text-sm">${b.idNumber||'—'}</td>
+      <td class="td-muted" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="${b.reason||''}">${(b.reason||'—').substring(0,60)}${b.reason?.length>60?'…':''}</td>
+      <td class="td-muted">${b.addedBy||'—'}</td>
+      <td class="td-muted mono">${b.createdAt ? timeAgo(b.createdAt) : '—'}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm text-danger" onclick="removeBlacklist(${b.id})">Remove</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openBlacklistModal() {
+  ['blName','blEmail','blPhone','blId','blReason'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('blError').classList.add('hidden');
+  document.getElementById('blacklistModal').classList.remove('hidden');
+}
+function closeBlacklistModal() { document.getElementById('blacklistModal').classList.add('hidden'); }
+
+async function saveBlacklist() {
+  const reason = document.getElementById('blReason').value.trim();
+  if (!reason) { document.getElementById('blError').innerHTML='Reason is required'; document.getElementById('blError').classList.remove('hidden'); return; }
+
+  const btn = document.getElementById('blSaveBtn');
+  setLoading(btn,'Saving…');
+
+  const r = await API.post('/api/blacklist', {
+    fullName: document.getElementById('blName').value,
+    email:    document.getElementById('blEmail').value,
+    phone:    document.getElementById('blPhone').value,
+    idNumber: document.getElementById('blId').value,
+    reason,   addedBy: 'admin',
+  });
+
+  if (r.success) { Toast.success('Added to blacklist'); closeBlacklistModal(); loadBlacklist(); }
+  else { document.getElementById('blError').innerHTML = r.message||'Failed'; document.getElementById('blError').classList.remove('hidden'); }
+  clearLoading(btn);
+}
+
+async function removeBlacklist(id) {
+  if (!await confirm2('Remove this entry from the blacklist?')) return;
+  const r = await API.del('/api/blacklist/' + id);
+  if (r.success) { Toast.success('Entry removed'); loadBlacklist(); }
+  else Toast.error(r.message);
+}
+
+// Export
+function exportFile(url, filename) {
+  Toast.info('Generating ' + filename + '…');
+  API.download(url, filename);
 }
 </script>
 </body>

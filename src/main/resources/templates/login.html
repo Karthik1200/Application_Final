@@ -1,85 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - VRGT System</title>
-    <meta name="description" content="Visitor Route Guidance & Tracking System - Secure Login Portal">
-    <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRGT System — Sign In</title>
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 <div class="login-page">
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-brand">
-                <div class="icon">🏢</div>
-                <h1>VRGT System</h1>
-                <p>Visitor Route Guidance & Tracking</p>
-            </div>
 
-            <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
-                <div id="loginError" class="hidden" style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:14px;margin-bottom:20px;text-align:center;"></div>
-
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
-                    Sign In
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <a href="/register">Pre-register as a Visitor →</a>
-            </div>
-
-            <div class="demo-credentials">
-                <h4>Demo Credentials</h4>
-                <div class="cred"><span>Admin</span><span>admin / admin123</span></div>
-                <div class="cred"><span>Guard</span><span>guard1 / guard123</span></div>
-                <div class="cred"><span>Reception</span><span>reception1 / reception123</span></div>
-                <div class="cred"><span>Host</span><span>host1 / host123</span></div>
-            </div>
+  <!-- Left panel -->
+  <div class="login-left">
+    <div class="login-left-content">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:36px;">
+        <div class="login-logo-icon">🏢</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:var(--text-primary);">VRGT System</div>
+          <div style="font-size:12px;color:var(--text-muted);">Visitor Route Guidance &amp; Tracking</div>
         </div>
+      </div>
+
+      <h2>Enterprise Visitor<br>Intelligence Platform</h2>
+      <p>Secure, real-time visitor management with encrypted QR passes, live indoor tracking, and multi-role dashboards.</p>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🔐</div>
+          <span>AES-256 encrypted QR passes with 24-hour expiry</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📍</div>
+          <span>Real-time indoor positioning &amp; live floor map</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔔</div>
+          <span>Instant host alerts via WebSocket notifications</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🛡</div>
+          <span>Blacklist detection &amp; full audit trail</span>
+        </div>
+      </div>
+
+      <!-- Live status strip -->
+      <div style="display:flex;gap:12px;margin-top:36px;flex-wrap:wrap;">
+        <div class="header-chip">System Online</div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+          Secure Connection
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="login-right">
+    <div class="login-box">
+      <div class="login-title">Welcome back</div>
+      <div class="login-subtitle">Sign in to your account to continue</div>
+
+      <div id="loginError" class="info-box danger hidden" style="margin-bottom:20px;"></div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input type="text" id="username" class="form-control" placeholder="Enter username" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+            <button type="button" class="input-action btn-ghost btn btn-sm" id="togglePwd" onclick="togglePwd()" style="font-size:16px;padding:4px 8px;">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="loginBtn" style="margin-top:4px;">
+          Sign In
+        </button>
+      </form>
+
+      <div class="divider">Quick sign-in</div>
+
+      <div class="demo-grid">
+        <div class="demo-cred" onclick="fillCred('admin','admin123')">
+          <div class="role">Admin</div>
+          <div class="cred">admin / admin123</div>
+        </div>
+        <div class="demo-cred" onclick="fillCred('guard1','guard123')">
+          <div class="role">Guard</div>
+          <div class="cred">guard1 / guard123</div>
+        </div>
+        <div class="demo-cred" onclick="fillCred('reception1','reception123')">
+          <div class="role">Reception</div>
+          <div class="cred">reception1 / ···</div>
+        </div>
+        <div class="demo-cred" onclick="fillCred('host1','host123')">
+          <div class="role">Host</div>
+          <div class="cred">host1 / host123</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted);">
+        Not a staff member? <a href="/register" style="color:var(--primary-light);font-weight:600;">Pre-register as Visitor →</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
+function fillCred(u, p) {
+  document.getElementById('username').value = u;
+  document.getElementById('password').value = p;
+  document.getElementById('loginBtn').focus();
+}
+
+function togglePwd() {
+  const inp = document.getElementById('password');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
 async function handleLogin(e) {
-    e.preventDefault();
-    const btn = document.getElementById('loginBtn');
-    const errDiv = document.getElementById('loginError');
-    btn.textContent = 'Signing in...';
-    btn.disabled = true;
-    errDiv.classList.add('hidden');
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  err.classList.add('hidden');
+  setLoading(btn, 'Signing in…');
 
-    const result = await API.post('/api/auth/login', {
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value
-    });
+  const result = await API.post('/api/auth/login', {
+    username: document.getElementById('username').value,
+    password: document.getElementById('password').value,
+  });
 
-    if (result.success) {
-        const role = result.data.role;
-        localStorage.setItem('user', JSON.stringify(result.data));
-        // Role-based redirect
-        if (role === 'ADMIN') window.location.href = '/admin';
-        else if (role === 'SECURITY_GUARD') window.location.href = '/gate';
-        else if (role === 'RECEPTIONIST') window.location.href = '/reception';
-        else if (role === 'HOST') window.location.href = '/tracking';
-        else window.location.href = '/admin';
-    } else {
-        errDiv.textContent = result.message || 'Login failed';
-        errDiv.classList.remove('hidden');
-        btn.textContent = 'Sign In';
-        btn.disabled = false;
-    }
+  if (result.success) {
+    localStorage.setItem('user', JSON.stringify(result.data));
+    const role = result.data.role;
+    const dest = role === 'ADMIN' ? '/admin'
+               : role === 'SECURITY_GUARD' ? '/gate'
+               : role === 'RECEPTIONIST'   ? '/reception'
+               : role === 'HOST'           ? '/tracking'
+               : '/admin';
+    window.location.href = dest;
+  } else {
+    err.innerHTML = '⚠ ' + (result.message || 'Invalid credentials');
+    err.classList.remove('hidden');
+    clearLoading(btn);
+  }
 }
 </script>
 </body>

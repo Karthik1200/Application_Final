@@ -89,6 +89,17 @@ public class VisitorController {
         }
     }
 
+    @PostMapping("/{id}/resend-otp")
+    public ResponseEntity<?> resendOtp(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+        try {
+            String channels = body != null ? body.getOrDefault("channels", "sms") : "sms";
+            visitorService.resendOtp(id, channels);
+            return ResponseEntity.ok(ApiResponseDTO.success("OTP resent via " + channels, null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
+        }
+    }
+
     @GetMapping("/today-count")
     public ResponseEntity<?> getTodayCount() {
         return ResponseEntity.ok(ApiResponseDTO.success("Today's count", visitorService.getTodayCount()));
