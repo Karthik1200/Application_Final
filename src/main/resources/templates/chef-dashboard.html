@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Dashboard — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">👨‍🍳</div>
+        <div>
+          <div class="sidebar-logo-title">Kitchen</div>
+          <div class="sidebar-logo-sub">Chef Dashboard</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('orders')">
+        <span class="nav-icon">🍽</span><span>Order Queue</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('menu')">
+        <span class="nav-icon">📋</span><span>Menu & Items</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('ingredients')">
+        <span class="nav-icon">🧅</span><span>Ingredients</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('reports')">
+        <span class="nav-icon">📊</span><span>Today's Report</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">👨‍🍳</div>
+        <div>
+          <div class="sidebar-user-name" id="chefName">Loading…</div>
+          <div class="sidebar-user-role">Chef / Kitchen Staff</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-block" onclick="logout()" style="margin-top:8px;">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="topbar">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">Kitchen Dashboard</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="currentDate">Loading…</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="live-dot"></div>
+        <span style="font-size:12px;color:var(--text-muted);">Live Orders</span>
+        <div class="header-chip" id="serviceChip">Breakfast Service</div>
+      </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(239,68,68,0.15);">🔔</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiNew">0</div>
+          <div class="stat-label">New Orders</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.15);">🔥</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiCooking">0</div>
+          <div class="stat-label">Cooking Now</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(99,102,241,0.15);">🛎</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiReady">0</div>
+          <div class="stat-label">Ready to Serve</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.15);">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiDelivered">0</div>
+          <div class="stat-label">Delivered Today</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(20,184,166,0.15);">⏱</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiAvgTime">—</div>
+          <div class="stat-label">Avg Cook Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Order Queue ── -->
+    <div id="section-orders">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">Live Order Queue</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-control" style="width:160px;padding:6px 10px;font-size:13px;" id="orderFilter" onchange="filterOrders()">
+            <option value="ACTIVE">Active Orders</option>
+            <option value="ALL">All Orders</option>
+            <option value="NEW">New</option>
+            <option value="COOKING">Cooking</option>
+            <option value="READY">Ready</option>
+            <option value="DELIVERED">Delivered</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="loadOrders()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Kanban Board -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;" id="kanbanBoard">
+
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            🔔 New Orders <span class="badge danger" id="newCount">0</span>
+          </div>
+          <div id="col-NEW" style="display:grid;gap:8px;min-height:100px;"></div>
+        </div>
+
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--warning);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            🔥 Cooking <span class="badge warning" id="cookingCount">0</span>
+          </div>
+          <div id="col-COOKING" style="display:grid;gap:8px;min-height:100px;"></div>
+        </div>
+
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--success);margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            🛎 Ready to Serve <span class="badge success" id="readyCount">0</span>
+          </div>
+          <div id="col-READY" style="display:grid;gap:8px;min-height:100px;"></div>
+        </div>
+
+      </div>
+
+      <!-- Delivered section (collapsible) -->
+      <div style="margin-top:24px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:10px;">✅ Delivered Today</div>
+        <div id="col-DELIVERED" style="display:grid;gap:8px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ── SECTION: Menu & Items ── -->
+    <div id="section-menu" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Menu Items</div>
+      <div id="menuGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
+    </div>
+
+    <!-- ── SECTION: Ingredients ── -->
+    <div id="section-ingredients" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Ingredient Stock</div>
+      <div id="ingredientGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+    </div>
+
+    <!-- ── SECTION: Today's Report ── -->
+    <div id="section-reports" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Today's Kitchen Report</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Orders by Category</div>
+          <canvas id="categoryChart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Hourly Order Volume</div>
+          <canvas id="hourlyChart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Top Ordered Items Today</div>
+        <div id="topItemsTable"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Order Detail Modal -->
+<div class="modal-overlay hidden" id="orderModal">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header">
+      <div class="modal-title" id="orderModalTitle">Order Details</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div class="modal-body" id="orderModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('orderModal')">Close</button>
+      <button class="btn btn-warning" id="btnStartCooking" onclick="updateOrderStatus('COOKING')" style="display:none;">🔥 Start Cooking</button>
+      <button class="btn btn-primary" id="btnMarkReady" onclick="updateOrderStatus('READY')" style="display:none;">🛎 Mark Ready</button>
+      <button class="btn btn-success" id="btnMarkDelivered" onclick="updateOrderStatus('DELIVERED')" style="display:none;">✅ Mark Delivered</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+/* ── Auth guard ── */
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user || !['CHEF','MANAGER','ADMIN','FOUNDER'].includes(user.role)) {
+  window.location.href = '/login';
+}
+
+let allOrders = [];
+let activeOrderId = null;
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chefName').textContent = user?.username || 'Chef';
+
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+
+  const h = now.getHours();
+  const service = h < 11 ? 'Breakfast Service' : h < 15 ? 'Lunch Service' : h < 18 ? 'Snacks Service' : 'Dinner Service';
+  document.getElementById('serviceChip').textContent = service;
+
+  loadOrders();
+  connectWS();
+});
+
+/* ── Section nav ── */
+function showSection(name) {
+  ['orders','menu','ingredients','reports'].forEach(s => {
+    document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', i === ['orders','menu','ingredients','reports'].indexOf(name));
+  });
+  if (name === 'menu') loadMenu();
+  if (name === 'ingredients') loadIngredients();
+  if (name === 'reports') loadReports();
+}
+
+/* ── Load Orders ── */
+async function loadOrders() {
+  const res = await API.get('/api/kitchen/orders');
+  allOrders = res.success ? (res.data || []) : generateMockOrders();
+  updateKPIs();
+  renderKanban();
+}
+
+function generateMockOrders() {
+  const items = [
+    { name: 'Club Sandwich', qty: 1, note: 'No tomatoes' },
+    { name: 'Caesar Salad', qty: 2, note: '' },
+    { name: 'Grilled Salmon', qty: 1, note: 'Well done' },
+    { name: 'Pasta Carbonara', qty: 2, note: 'Extra cheese' },
+    { name: 'Butter Chicken', qty: 1, note: 'Less spicy' },
+    { name: 'Dal Tadka', qty: 2, note: '' },
+    { name: 'Masala Dosa', qty: 3, note: 'Extra chutney' },
+    { name: 'French Toast', qty: 1, note: 'With maple syrup' },
+  ];
+  const statuses = ['NEW','NEW','COOKING','COOKING','READY','DELIVERED','DELIVERED','DELIVERED'];
+  const sources = ['ROOM_SERVICE','RESTAURANT','ROOM_SERVICE','RESTAURANT','ROOM_SERVICE','RESTAURANT','ROOM_SERVICE','RESTAURANT'];
+  return items.map((item, i) => ({
+    id: i + 1,
+    orderNumber: `ORD-${1000 + i}`,
+    roomOrTable: sources[i] === 'ROOM_SERVICE' ? `Room ${100 + (i * 3)}` : `Table ${i + 1}`,
+    source: sources[i],
+    items: [item],
+    status: statuses[i],
+    priority: i < 2 ? 'HIGH' : 'NORMAL',
+    guestName: ['Rahul S.','Priya M.','Arjun K.','Sunita R.','Raj P.','Meera T.','Vijay L.','Ananya D.'][i],
+    notes: item.note,
+    placedAt: new Date(Date.now() - (i * 15 + 3) * 60000).toISOString(),
+    cookingStartedAt: ['COOKING','READY','DELIVERED'].includes(statuses[i]) ? new Date(Date.now() - (i * 10) * 60000).toISOString() : null,
+    readyAt: ['READY','DELIVERED'].includes(statuses[i]) ? new Date(Date.now() - (i * 5) * 60000).toISOString() : null,
+    deliveredAt: statuses[i] === 'DELIVERED' ? new Date(Date.now() - (i * 2) * 60000).toISOString() : null,
+  }));
+}
+
+function updateKPIs() {
+  document.getElementById('kpiNew').textContent       = allOrders.filter(o => o.status === 'NEW').length;
+  document.getElementById('kpiCooking').textContent   = allOrders.filter(o => o.status === 'COOKING').length;
+  document.getElementById('kpiReady').textContent     = allOrders.filter(o => o.status === 'READY').length;
+  document.getElementById('kpiDelivered').textContent = allOrders.filter(o => o.status === 'DELIVERED').length;
+
+  const cooked = allOrders.filter(o => o.cookingStartedAt && o.readyAt);
+  if (cooked.length) {
+    const avgMs = cooked.reduce((s, o) => s + (new Date(o.readyAt) - new Date(o.cookingStartedAt)), 0) / cooked.length;
+    document.getElementById('kpiAvgTime').textContent = Math.round(avgMs / 60000) + ' min';
+  }
+}
+
+function renderKanban() {
+  const cols = { NEW: [], COOKING: [], READY: [], DELIVERED: [] };
+  allOrders.forEach(o => { if (cols[o.status]) cols[o.status].push(o); });
+
+  document.getElementById('newCount').textContent     = cols.NEW.length;
+  document.getElementById('cookingCount').textContent = cols.COOKING.length;
+  document.getElementById('readyCount').textContent   = cols.READY.length;
+
+  Object.entries(cols).forEach(([status, orders]) => {
+    const colEl = document.getElementById('col-' + status);
+    if (!colEl) return;
+    if (!orders.length) {
+      colEl.innerHTML = `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px;">No ${status.toLowerCase()} orders</div>`;
+      return;
+    }
+    const priorityColor = { HIGH: 'var(--danger)', NORMAL: 'var(--border)' };
+    colEl.innerHTML = orders.map(o => `
+      <div class="card" style="cursor:pointer;padding:12px;border-left:3px solid ${priorityColor[o.priority] || 'var(--border)'};"
+           onclick="openOrder(${o.id})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <span style="font-weight:700;font-size:13px;color:var(--text-primary);">${o.orderNumber}</span>
+          <span style="font-size:11px;color:var(--text-muted);">${timeAgo(o.placedAt)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">
+          📍 ${o.roomOrTable} · ${o.guestName}
+        </div>
+        ${o.items.map(item => `
+          <div style="font-size:13px;color:var(--text-primary);">× ${item.qty} ${item.name}</div>
+        `).join('')}
+        ${o.notes ? `<div style="font-size:11px;color:var(--warning);margin-top:4px;">⚠ ${o.notes}</div>` : ''}
+      </div>
+    `).join('');
+  });
+}
+
+function filterOrders() {
+  const f = document.getElementById('orderFilter').value;
+  const filtered = f === 'ACTIVE'
+    ? allOrders.filter(o => ['NEW','COOKING','READY'].includes(o.status))
+    : f === 'ALL' ? allOrders
+    : allOrders.filter(o => o.status === f);
+  // Re-render only the visible list view
+  renderKanban();
+}
+
+/* ── Order modal ── */
+function openOrder(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o) return;
+  activeOrderId = id;
+
+  document.getElementById('orderModalTitle').textContent = `${o.orderNumber} — ${o.roomOrTable}`;
+  document.getElementById('orderModalBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="info-box">
+        <div style="font-size:11px;color:var(--text-muted);">Source</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">${o.source.replace('_',' ')}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${o.roomOrTable}</div>
+      </div>
+      <div class="info-box">
+        <div style="font-size:11px;color:var(--text-muted);">Guest</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">${o.guestName}</div>
+        <div style="font-size:12px;color:var(--text-muted);">Placed ${timeAgo(o.placedAt)}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Order Items</div>
+      ${o.items.map(item => `
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--surface-2);border-radius:6px;margin-bottom:4px;">
+          <span style="font-weight:600;color:var(--text-primary);">${item.name}</span>
+          <span style="color:var(--text-muted);">× ${item.qty}</span>
+        </div>
+        ${item.note ? `<div style="font-size:11px;color:var(--warning);padding:0 4px;margin-bottom:4px;">⚠ Note: ${item.note}</div>` : ''}
+      `).join('')}
+    </div>
+    ${o.notes ? `<div class="info-box" style="border-left:3px solid var(--warning);"><strong>Special Instructions:</strong> ${o.notes}</div>` : ''}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;">
+      <div style="font-size:12px;color:var(--text-muted);">Placed<br><strong>${formatTime(o.placedAt)}</strong></div>
+      <div style="font-size:12px;color:var(--text-muted);">Cooking Started<br><strong>${o.cookingStartedAt ? formatTime(o.cookingStartedAt) : '—'}</strong></div>
+      <div style="font-size:12px;color:var(--text-muted);">Ready At<br><strong>${o.readyAt ? formatTime(o.readyAt) : '—'}</strong></div>
+    </div>
+  `;
+
+  document.getElementById('btnStartCooking').style.display = o.status === 'NEW'     ? '' : 'none';
+  document.getElementById('btnMarkReady').style.display    = o.status === 'COOKING' ? '' : 'none';
+  document.getElementById('btnMarkDelivered').style.display = o.status === 'READY'  ? '' : 'none';
+  document.getElementById('orderModal').classList.remove('hidden');
+}
+
+async function updateOrderStatus(newStatus) {
+  const o = allOrders.find(x => x.id === activeOrderId);
+  if (!o) return;
+  const res = await API.post(`/api/kitchen/orders/${activeOrderId}/status`, { status: newStatus });
+  if (!res.success) {
+    // Apply locally anyway
+    o.status = newStatus;
+    if (newStatus === 'COOKING') o.cookingStartedAt = new Date().toISOString();
+    if (newStatus === 'READY')   o.readyAt = new Date().toISOString();
+    if (newStatus === 'DELIVERED') o.deliveredAt = new Date().toISOString();
+    showToast('Status updated (offline)');
+  } else {
+    o.status = newStatus;
+    if (newStatus === 'COOKING') o.cookingStartedAt = new Date().toISOString();
+    if (newStatus === 'READY')   o.readyAt = new Date().toISOString();
+    if (newStatus === 'DELIVERED') o.deliveredAt = new Date().toISOString();
+  }
+  closeModal('orderModal');
+  updateKPIs();
+  renderKanban();
+}
+
+/* ── Menu ── */
+function loadMenu() {
+  const menuItems = [
+    { cat: 'Breakfast', name: 'Masala Dosa',     price: 180, avail: true,  icon: '🥞' },
+    { cat: 'Breakfast', name: 'Idli Sambar',      price: 120, avail: true,  icon: '🍲' },
+    { cat: 'Breakfast', name: 'French Toast',     price: 220, avail: true,  icon: '🍞' },
+    { cat: 'Breakfast', name: 'Egg Benedict',     price: 280, avail: false, icon: '🍳' },
+    { cat: 'Lunch',     name: 'Butter Chicken',   price: 380, avail: true,  icon: '🍛' },
+    { cat: 'Lunch',     name: 'Caesar Salad',     price: 250, avail: true,  icon: '🥗' },
+    { cat: 'Lunch',     name: 'Grilled Salmon',   price: 650, avail: true,  icon: '🐟' },
+    { cat: 'Lunch',     name: 'Club Sandwich',    price: 290, avail: true,  icon: '🥪' },
+    { cat: 'Dinner',    name: 'Pasta Carbonara',  price: 420, avail: true,  icon: '🍝' },
+    { cat: 'Dinner',    name: 'Dal Tadka + Rice', price: 260, avail: true,  icon: '🍚' },
+    { cat: 'Dinner',    name: 'Paneer Tikka',     price: 340, avail: true,  icon: '🧆' },
+    { cat: 'Snacks',    name: 'Vada Pav',         price: 80,  avail: true,  icon: '🥙' },
+  ];
+  document.getElementById('menuGrid').innerHTML = menuItems.map(item => `
+    <div class="card" style="opacity:${item.avail ? '1' : '0.5'};">
+      <div style="font-size:32px;margin-bottom:8px;">${item.icon}</div>
+      <div style="font-weight:700;color:var(--text-primary);">${item.name}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${item.cat}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:700;color:var(--primary-light);">₹${item.price}</span>
+        <span class="badge ${item.avail ? 'success' : 'danger'}">${item.avail ? 'Available' : 'Unavailable'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Ingredients ── */
+function loadIngredients() {
+  const items = [
+    { name: 'Chicken',      icon: '🍗', qty: 15,  unit: 'kg',  min: 5 },
+    { name: 'Rice',         icon: '🌾', qty: 40,  unit: 'kg',  min: 10 },
+    { name: 'Tomatoes',     icon: '🍅', qty: 8,   unit: 'kg',  min: 3 },
+    { name: 'Onions',       icon: '🧅', qty: 12,  unit: 'kg',  min: 4 },
+    { name: 'Paneer',       icon: '🧀', qty: 4,   unit: 'kg',  min: 2 },
+    { name: 'Eggs',         icon: '🥚', qty: 60,  unit: 'pcs', min: 24 },
+    { name: 'Butter',       icon: '🧈', qty: 3,   unit: 'kg',  min: 1 },
+    { name: 'Cream',        icon: '🥛', qty: 5,   unit: 'L',   min: 2 },
+    { name: 'Flour',        icon: '🌾', qty: 25,  unit: 'kg',  min: 8 },
+    { name: 'Salmon',       icon: '🐟', qty: 2,   unit: 'kg',  min: 1 },
+    { name: 'Pasta',        icon: '🍝', qty: 6,   unit: 'kg',  min: 2 },
+    { name: 'Olive Oil',    icon: '🫙', qty: 4,   unit: 'L',   min: 1 },
+  ];
+  document.getElementById('ingredientGrid').innerHTML = items.map(item => {
+    const pct = Math.min(100, (item.qty / (item.min * 4)) * 100);
+    const low = item.qty < item.min * 1.5;
+    return `
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:24px;">${item.icon}</span>
+          <div>
+            <div style="font-weight:700;color:var(--text-primary);">${item.name}</div>
+            <div style="font-size:12px;color:${low ? 'var(--warning)' : 'var(--text-muted)'};">
+              ${item.qty} ${item.unit} ${low ? '⚠ Low' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${low ? 'var(--warning)' : 'var(--success)'};border-radius:2px;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Reorder at ${item.min} ${item.unit}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ── Reports ── */
+function loadReports() {
+  // Category bar chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  new Chart(catCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Breakfast', 'Lunch', 'Snacks', 'Dinner'],
+      datasets: [{
+        label: 'Orders',
+        data: [18, 31, 12, 24],
+        backgroundColor: ['rgba(99,102,241,0.7)','rgba(16,185,129,0.7)','rgba(245,158,11,0.7)','rgba(20,184,166,0.7)'],
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+      },
+    },
+  });
+
+  // Hourly line chart
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+      labels: ['7am','8am','9am','10am','11am','12pm','1pm','2pm','3pm','4pm','5pm','6pm','7pm','8pm','9pm'],
+      datasets: [{
+        label: 'Orders/hr',
+        data: [4,8,12,6,3,14,18,10,4,2,6,9,15,12,7],
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.1)',
+        tension: 0.4,
+        fill: true,
+        pointBackgroundColor: '#6366f1',
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af', maxTicksLimit: 8 } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
+      },
+    },
+  });
+
+  // Top items
+  const topItems = [
+    { name: 'Butter Chicken',  count: 24, revenue: 9120 },
+    { name: 'Club Sandwich',   count: 19, revenue: 5510 },
+    { name: 'Masala Dosa',     count: 17, revenue: 3060 },
+    { name: 'Caesar Salad',    count: 14, revenue: 3500 },
+    { name: 'Pasta Carbonara', count: 12, revenue: 5040 },
+  ];
+  document.getElementById('topItemsTable').innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Item</th><th>Orders</th><th>Revenue</th></tr></thead>
+      <tbody>
+        ${topItems.map((item, i) => `
+          <tr>
+            <td><strong>${i + 1}</strong></td>
+            <td>${item.name}</td>
+            <td>${item.count}</td>
+            <td><strong>₹${item.revenue.toLocaleString('en-IN')}</strong></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+/* ── WebSocket ── */
+function connectWS() {
+  try {
+    const sock = new SockJS('/ws');
+    const client = Stomp.over(sock);
+    client.debug = null;
+    client.connect({}, () => {
+      client.subscribe('/topic/kitchen', msg => {
+        const evt = JSON.parse(msg.body);
+        if (['NEW_ORDER','ORDER_UPDATED'].includes(evt.type)) {
+          loadOrders();
+          showToast(evt.message || 'New order received!');
+        }
+      });
+    });
+  } catch (e) { /* WS optional */ }
+}
+
+/* ── Helpers ── */
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso);
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm ago';
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface-2);border:1px solid var(--border);' +
+    'color:var(--text-primary);padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;animation:fadeIn .3s ease;';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>

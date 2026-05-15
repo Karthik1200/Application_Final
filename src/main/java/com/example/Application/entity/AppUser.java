@@ -1,6 +1,7 @@
 package com.example.Application.entity;
 
 import com.example.Application.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class AppUser {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String password;
 
@@ -34,6 +36,7 @@ public class AppUser {
     @Column(nullable = false)
     private UserRole role;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
 

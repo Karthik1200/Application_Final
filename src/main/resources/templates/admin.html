@@ -18,12 +18,21 @@
       <div><h2>VRGT System</h2><small>Admin Panel</small></div>
     </div>
     <ul class="sidebar-nav">
+      <li style="padding:8px 16px 4px;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Role Dashboards</li>
+      <li><a href="/founder-dashboard"><span class="nav-icon">👑</span>Founder</a></li>
+      <li><a href="/manager-dashboard"><span class="nav-icon">🏨</span>Manager</a></li>
+      <li><a href="/admin" class="active"><span class="nav-icon">⚙</span>Admin</a></li>
+      <li><a href="/front-office"><span class="nav-icon">🛎</span>Front Office</a></li>
+      <li><a href="/room-service"><span class="nav-icon">🛏</span>Room Service</a></li>
+      <li><a href="/chef-dashboard"><span class="nav-icon">👨‍🍳</span>Chef / Kitchen</a></li>
+      <li><a href="/client-portal"><span class="nav-icon">🧳</span>Guest Portal</a></li>
+      <li style="padding:8px 16px 4px;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-top:4px;">Operations</li>
       <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
-      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
-      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/reception"><span class="nav-icon">📋</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Live Tracking</a></li>
       <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
       <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
-      <li><a href="/admin" class="active"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/emergency"><span class="nav-icon">🚨</span>Emergency</a></li>
       <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -238,16 +247,41 @@
       <div class="tab-panel" id="tabUsers">
         <div class="card">
           <div class="card-header">
-            <h3>👤 Staff Users</h3>
-            <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Add User</button>
+            <h3>👤 User Management</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="userSearchInput" class="form-control" placeholder="🔍 Search name, email, role…"
+                     style="width:220px;padding:6px 10px;font-size:13px;" oninput="filterUsers()">
+              <select id="userRoleFilter" class="form-control" style="width:150px;padding:6px 10px;font-size:13px;" onchange="filterUsers()">
+                <option value="">All Roles</option>
+                <option value="FOUNDER">Founder</option>
+                <option value="MANAGER">Manager</option>
+                <option value="ADMIN">Admin</option>
+                <option value="FRONT_OFFICE">Front Office</option>
+                <option value="ROOM_SERVICE">Room Service</option>
+                <option value="CHEF">Chef</option>
+                <option value="CLIENT">Guest</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Add User</button>
+            </div>
           </div>
+          <div id="userStatsBar" style="display:flex;gap:16px;padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted);"></div>
           <div class="table-wrapper">
             <table>
               <thead>
-                <tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr>
+                <tr>
+                  <th>Name</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Role</th>
+                  <th>Department</th>
+                  <th>Joined</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody id="usersBody">
-                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+                <tr><td colspan="9" class="text-center text-muted" style="padding:32px;">Loading users…</td></tr>
               </tbody>
             </table>
           </div>
@@ -315,53 +349,67 @@
 
 <!-- User Modal -->
 <div id="userModal" class="modal-overlay hidden">
-  <div class="modal">
+  <div class="modal" style="width:520px;max-width:95vw;">
     <div class="modal-header">
       <h3 id="userModalTitle">👤 Add Staff User</h3>
       <button class="modal-close" onclick="closeUserModal()">×</button>
     </div>
-    <div id="userError" class="info-box danger hidden mb-3"></div>
+    <div id="userError" class="info-box danger hidden" style="margin-bottom:14px;"></div>
     <input type="hidden" id="editUserId">
-    <div class="grid-2">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="form-group">
         <label class="form-label">Full Name *</label>
-        <input type="text" id="uFullName" class="form-control" placeholder="John Doe">
+        <input type="text" id="uFullName" class="form-control" placeholder="e.g. Priya Sharma" autocomplete="off">
       </div>
       <div class="form-group">
-        <label class="form-label">Username *</label>
-        <input type="text" id="uUsername" class="form-control" placeholder="johndoe">
+        <label class="form-label">Username * <span id="uUsernameNote" style="font-size:10px;color:var(--text-muted);"></span></label>
+        <input type="text" id="uUsername" class="form-control" placeholder="e.g. priya_sharma" autocomplete="off">
       </div>
     </div>
-    <div class="grid-2">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="form-group">
         <label class="form-label">Email *</label>
-        <input type="email" id="uEmail" class="form-control" placeholder="john@vrgt.com">
+        <input type="email" id="uEmail" class="form-control" placeholder="priya@hotel.com" autocomplete="off">
       </div>
       <div class="form-group">
-        <label class="form-label">Password <span id="uPwdNote" style="font-size:10px;color:var(--text-muted);">*</span></label>
-        <input type="password" id="uPassword" class="form-control" placeholder="Min 6 characters">
+        <label class="form-label">Phone</label>
+        <input type="tel" id="uPhone" class="form-control" placeholder="9876543210" autocomplete="off">
       </div>
     </div>
-    <div class="grid-2">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="form-group">
         <label class="form-label">Role *</label>
         <select id="uRole" class="form-control">
-          <option value="ADMIN">Admin</option>
-          <option value="SECURITY_GUARD">Security Guard</option>
-          <option value="RECEPTIONIST">Receptionist</option>
-          <option value="HOST" selected>Host</option>
+          <option value="FOUNDER">👑 Founder</option>
+          <option value="MANAGER">🏨 Manager</option>
+          <option value="ADMIN">⚙ Admin</option>
+          <option value="FRONT_OFFICE" selected>🛎 Front Office</option>
+          <option value="ROOM_SERVICE">🛏 Room Service</option>
+          <option value="CHEF">👨‍🍳 Chef</option>
+          <option value="CLIENT">🧳 Guest / Client</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">Department</label>
-        <input type="text" id="uDept" class="form-control" placeholder="e.g. Engineering">
+        <input type="text" id="uDept" class="form-control" placeholder="e.g. Front Office" autocomplete="off">
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Phone</label>
-      <input type="tel" id="uPhone" class="form-control" placeholder="9876543210">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label class="form-label">Password <span id="uPwdNote" style="font-size:10px;color:var(--text-muted);">*</span></label>
+        <input type="password" id="uPassword" class="form-control" placeholder="Min 6 characters" autocomplete="new-password">
+      </div>
+      <div class="form-group" id="uConfirmPwdGroup">
+        <label class="form-label">Confirm Password *</label>
+        <input type="password" id="uConfirmPassword" class="form-control" placeholder="Repeat password" autocomplete="new-password">
+      </div>
     </div>
-    <div class="modal-footer">
+
+    <div class="modal-footer" style="margin-top:4px;">
       <button class="btn btn-outline" onclick="closeUserModal()">Cancel</button>
       <button class="btn btn-primary" id="uSaveBtn" onclick="saveUser()">💾 Save User</button>
     </div>
@@ -472,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   loadCharts();
   loadMiniMap();
+  loadUsers();   // pre-load so Users tab shows data immediately on first click
   setInterval(loadDashboard, 10000);
   setInterval(loadMiniMap, 6000);
 });
@@ -670,62 +719,158 @@ function exportFile(url, filename) {
 }
 
 // ── Users tab ──────────────────────────────────────────────────────────────
+let _allUsers = [];
+
+const ROLE_META = {
+  FOUNDER:      { label: 'Founder',      color: '#a855f7', icon: '👑' },
+  MANAGER:      { label: 'Manager',      color: '#6366f1', icon: '🏨' },
+  ADMIN:        { label: 'Admin',        color: '#06b6d4', icon: '⚙' },
+  FRONT_OFFICE: { label: 'Front Office', color: '#10b981', icon: '🛎' },
+  ROOM_SERVICE: { label: 'Room Service', color: '#f59e0b', icon: '🛏' },
+  CHEF:         { label: 'Chef',         color: '#ef4444', icon: '👨‍🍳' },
+  CLIENT:       { label: 'Guest',        color: '#64748b', icon: '🧳' },
+};
+
 async function loadUsers() {
-  const r = await API.get('/api/admin/users');
   const tbody = document.getElementById('usersBody');
-  if (!r.success || !r.data?.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No users found</td></tr>'; return;
+  tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:32px;"><span class="spinner spinner-sm"></span> Loading…</td></tr>';
+
+  const r = await API.get('/api/admin/users');
+  if (!r.success) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding:32px;">⚠ ${r.message || 'Failed to load users'}</td></tr>`;
+    return;
   }
-  const roleLabel = { ADMIN:'Admin', SECURITY_GUARD:'Guard', RECEPTIONIST:'Reception', HOST:'Host' };
-  tbody.innerHTML = r.data.map(u => `
-    <tr style="${!u.active ? 'opacity:0.5;' : ''}">
-      <td>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:28px;height:28px;border-radius:50%;background:${avatarColor(u.fullName)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">${initials(u.fullName)}</div>
-          <strong style="font-size:13px;">${u.fullName}</strong>
-        </div>
-      </td>
-      <td class="mono text-sm">${u.username}</td>
-      <td class="td-muted">${u.email}</td>
-      <td><span class="badge pre-registered">${roleLabel[u.role] || u.role}</span></td>
-      <td class="td-muted">${u.department || '—'}</td>
-      <td>${u.active ? '<span class="badge at-gate">Active</span>' : '<span class="badge checked-out">Inactive</span>'}</td>
-      <td style="display:flex;gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="openEditUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">Edit</button>
-        ${u.active ? `<button class="btn btn-ghost btn-sm text-danger" onclick="deactivateUser(${u.id},'${u.username}')">Deactivate</button>` : `<button class="btn btn-ghost btn-sm text-success" onclick="activateUser(${u.id})">Activate</button>`}
-      </td>
-    </tr>
-  `).join('');
+
+  _allUsers = r.data || [];
+  renderUsersTable(_allUsers);
+  renderUserStats(_allUsers);
+}
+
+function renderUserStats(users) {
+  const bar = document.getElementById('userStatsBar');
+  if (!bar) return;
+  const total  = users.length;
+  const active = users.filter(u => u.active).length;
+  const byRole = {};
+  users.forEach(u => { byRole[u.role] = (byRole[u.role] || 0) + 1; });
+  bar.innerHTML =
+    `<span><strong>${total}</strong> total</span>` +
+    `<span style="color:var(--success)">● <strong>${active}</strong> active</span>` +
+    `<span style="color:var(--danger)">● <strong>${total - active}</strong> inactive</span>` +
+    Object.entries(byRole).map(([role, count]) => {
+      const m = ROLE_META[role] || { label: role, color: 'var(--text-muted)', icon: '' };
+      return `<span style="color:${m.color};">${m.icon} ${m.label}: <strong>${count}</strong></span>`;
+    }).join('');
+}
+
+function filterUsers() {
+  const q    = (document.getElementById('userSearchInput')?.value || '').toLowerCase();
+  const role = document.getElementById('userRoleFilter')?.value || '';
+  const filtered = _allUsers.filter(u =>
+    (!role || u.role === role) &&
+    (!q || [u.fullName, u.username, u.email, u.department, u.phone].join(' ').toLowerCase().includes(q))
+  );
+  renderUsersTable(filtered);
+}
+
+function renderUsersTable(users) {
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:32px;">No users match the filter.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => {
+    const m = ROLE_META[u.role] || { label: u.role, color: 'var(--text-muted)', icon: '' };
+    const joined = u.createdAt ? fmtTime(u.createdAt) : '—';
+    return `
+      <tr style="${!u.active ? 'opacity:0.45;' : ''}">
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:${avatarColor(u.fullName)};
+                        display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;">
+              ${initials(u.fullName)}
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${u.fullName}</div>
+              <div style="font-size:11px;color:var(--text-muted);">#${u.id}</div>
+            </div>
+          </div>
+        </td>
+        <td class="mono text-sm">${u.username}</td>
+        <td style="font-size:12px;color:var(--text-secondary);">${u.email}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${u.phone || '—'}</td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;
+                       font-size:11px;font-weight:600;background:${m.color}22;color:${m.color};">
+            ${m.icon} ${m.label}
+          </span>
+        </td>
+        <td style="font-size:12px;color:var(--text-muted);">${u.department || '—'}</td>
+        <td style="font-size:11px;color:var(--text-muted);">${joined}</td>
+        <td>
+          ${u.active
+            ? '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);">● Active</span>'
+            : '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(239,68,68,0.15);color:var(--danger);">● Inactive</span>'
+          }
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="openEditUser(${u.id})" title="Edit user">✏ Edit</button>
+            ${u.active
+              ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="deactivateUser(${u.id},'${u.username}')" title="Deactivate">🚫 Off</button>`
+              : `<button class="btn btn-ghost btn-sm" style="color:var(--success);" onclick="activateUser(${u.id})" title="Activate">✅ On</button>`
+            }
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function openUserModal() {
   document.getElementById('userModalTitle').textContent = '👤 Add Staff User';
   document.getElementById('editUserId').value = '';
-  ['uFullName','uUsername','uEmail','uPassword','uPhone','uDept'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('uRole').value = 'HOST';
+  ['uFullName','uUsername','uEmail','uPassword','uConfirmPassword','uPhone','uDept'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('uRole').value = 'FRONT_OFFICE';
   document.getElementById('uUsername').disabled = false;
+  document.getElementById('uUsernameNote').textContent = '';
   document.getElementById('uPwdNote').textContent = '*';
+  document.getElementById('uConfirmPwdGroup').style.display = '';
   document.getElementById('userError').classList.add('hidden');
   document.getElementById('userModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('uFullName').focus(), 100);
 }
 
-function openEditUser(u) {
-  document.getElementById('userModalTitle').textContent = '✏ Edit User';
-  document.getElementById('editUserId').value   = u.id;
-  document.getElementById('uFullName').value    = u.fullName || '';
-  document.getElementById('uUsername').value    = u.username || '';
-  document.getElementById('uUsername').disabled = true;
-  document.getElementById('uEmail').value       = u.email || '';
-  document.getElementById('uPassword').value    = '';
-  document.getElementById('uPwdNote').textContent = '(leave blank to keep)';
-  document.getElementById('uRole').value        = u.role || 'HOST';
-  document.getElementById('uDept').value        = u.department || '';
-  document.getElementById('uPhone').value       = u.phone || '';
+function openEditUser(userId) {
+  const u = _allUsers.find(x => x.id === userId);
+  if (!u) { Toast.error('User not found'); return; }
+
+  document.getElementById('userModalTitle').textContent = '✏ Edit — ' + u.fullName;
+  document.getElementById('editUserId').value       = u.id;
+  document.getElementById('uFullName').value        = u.fullName || '';
+  document.getElementById('uUsername').value        = u.username || '';
+  document.getElementById('uUsername').disabled     = true;
+  document.getElementById('uUsernameNote').textContent = '(cannot change)';
+  document.getElementById('uEmail').value           = u.email || '';
+  document.getElementById('uPassword').value        = '';
+  document.getElementById('uConfirmPassword').value = '';
+  document.getElementById('uPwdNote').textContent   = '(leave blank to keep)';
+  document.getElementById('uConfirmPwdGroup').style.display = 'none';
+  document.getElementById('uRole').value            = u.role || 'FRONT_OFFICE';
+  document.getElementById('uDept').value            = u.department || '';
+  document.getElementById('uPhone').value           = u.phone || '';
   document.getElementById('userError').classList.add('hidden');
   document.getElementById('userModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('uFullName').focus(), 100);
 }
 
-function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+function closeUserModal() {
+  document.getElementById('userModal').classList.add('hidden');
+}
 
 async function saveUser() {
   const editId = document.getElementById('editUserId').value;
@@ -733,48 +878,70 @@ async function saveUser() {
   const errEl  = document.getElementById('userError');
   errEl.classList.add('hidden');
 
-  const body = {
-    fullName:   document.getElementById('uFullName').value.trim(),
-    username:   document.getElementById('uUsername').value.trim(),
-    email:      document.getElementById('uEmail').value.trim(),
-    password:   document.getElementById('uPassword').value,
-    role:       document.getElementById('uRole').value,
-    department: document.getElementById('uDept').value.trim(),
-    phone:      document.getElementById('uPhone').value.trim(),
-  };
-  if (!body.fullName || !body.email || (!isEdit && (!body.username || !body.password))) {
-    errEl.innerHTML = 'Full name, email' + (!isEdit ? ', username and password' : '') + ' are required';
+  const fullName = document.getElementById('uFullName').value.trim();
+  const username = document.getElementById('uUsername').value.trim();
+  const email    = document.getElementById('uEmail').value.trim();
+  const password = document.getElementById('uPassword').value;
+  const confirm  = document.getElementById('uConfirmPassword').value;
+  const role     = document.getElementById('uRole').value;
+  const dept     = document.getElementById('uDept').value.trim();
+  const phone    = document.getElementById('uPhone').value.trim();
+
+  // Validation
+  if (!fullName || !email) {
+    errEl.innerHTML = '⚠ Full name and email are required.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (!isEdit && !username) {
+    errEl.innerHTML = '⚠ Username is required.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (!isEdit && !password) {
+    errEl.innerHTML = '⚠ Password is required.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (!isEdit && password !== confirm) {
+    errEl.innerHTML = '⚠ Passwords do not match.';
+    errEl.classList.remove('hidden'); return;
+  }
+  if (!isEdit && password.length < 6) {
+    errEl.innerHTML = '⚠ Password must be at least 6 characters.';
     errEl.classList.remove('hidden'); return;
   }
 
+  const body = { fullName, username, email, role, department: dept, phone };
+  if (password) body.password = password;
+
   const btn = document.getElementById('uSaveBtn');
-  setLoading(btn, 'Saving…');
+  setLoading(btn, isEdit ? 'Updating…' : 'Creating…');
+
   const r = isEdit
     ? await API.put('/api/admin/users/' + editId, body)
     : await API.post('/api/admin/users', body);
+
   clearLoading(btn);
 
   if (r.success) {
-    Toast.success(isEdit ? 'User updated' : 'User created');
+    Toast.success(isEdit ? 'User updated successfully' : 'User created successfully');
     closeUserModal();
     loadUsers();
   } else {
-    errEl.innerHTML = r.message || 'Failed to save';
+    errEl.innerHTML = '⚠ ' + (r.message || 'Failed to save user');
     errEl.classList.remove('hidden');
   }
 }
 
 async function deactivateUser(id, username) {
-  if (!await confirm2('Deactivate user "' + username + '"? They will not be able to log in.')) return;
+  if (!await confirm2('Deactivate "' + username + '"? They will no longer be able to log in.')) return;
   const r = await API.del('/api/admin/users/' + id);
   if (r.success) { Toast.success('User deactivated'); loadUsers(); }
-  else Toast.error(r.message);
+  else Toast.error(r.message || 'Failed to deactivate');
 }
 
 async function activateUser(id) {
   const r = await API.put('/api/admin/users/' + id, { active: 'true' });
   if (r.success) { Toast.success('User activated'); loadUsers(); }
-  else Toast.error(r.message);
+  else Toast.error(r.message || 'Failed to activate');
 }
 
 // ── Rooms tab ──────────────────────────────────────────────────────────────

@@ -5,11 +5,14 @@ import com.example.Application.dto.ApiResponseDTO;
 import com.example.Application.dto.LoginRequestDTO;
 import com.example.Application.dto.LoginResponseDTO;
 import com.example.Application.entity.AppUser;
+import com.example.Application.enums.UserRole;
 import com.example.Application.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -55,6 +58,55 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok(ApiResponseDTO.success("Login successful", loginResponse));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
+        String username = body.get("username");
+        String password = body.get("password");
+        String fullName = body.get("fullName");
+        String email    = body.get("email");
+        String phone    = body.getOrDefault("phone", "");
+
+        if (username == null || username.isBlank() ||
+            password == null || password.isBlank() ||
+            fullName == null || fullName.isBlank() ||
+            email    == null || email.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseDTO.error("Full name, username, email and password are required"));
+        }
+
+        if (appUserRepository.existsByUsername(username)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseDTO.error("Username is already taken"));
+        }
+
+        if (appUserRepository.existsByEmail(email)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseDTO.error("Email is already registered"));
+        }
+
+        AppUser newUser = AppUser.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .fullName(fullName)
+                .email(email)
+                .phone(phone)
+                .department("Guest")
+                .role(UserRole.CLIENT)   // public registration is always CLIENT
+                .active(true)
+                .build();
+
+        AppUser saved = appUserRepository.save(newUser);
+
+        LoginResponseDTO loginResponse = LoginResponseDTO.builder()
+                .username(saved.getUsername())
+                .fullName(saved.getFullName())
+                .role(saved.getRole().name())
+                .userId(saved.getId())
+                .build();
+
+        return ResponseEntity.ok(ApiResponseDTO.success("Account created successfully", loginResponse));
     }
 
     @PostMapping("/logout")

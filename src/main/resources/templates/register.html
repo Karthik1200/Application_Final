@@ -3,508 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visitor Pre-Registration — VRGT System</title>
+  <title>Create Account — VRGT System</title>
   <link rel="stylesheet" href="/css/styles.css">
-  <style>
-    /* ── Channel selector ── */
-    .channel-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 6px;
-    }
-    .channel-card {
-      position: relative;
-      cursor: pointer;
-    }
-    .channel-card input[type="checkbox"] {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .channel-label {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 14px 8px;
-      border: 1.5px solid var(--border-light);
-      border-radius: 10px;
-      background: var(--bg-card-2);
-      transition: border-color 0.2s, background 0.2s;
-      user-select: none;
-    }
-    .channel-card input:checked + .channel-label {
-      border-color: var(--primary);
-      background: rgba(99,102,241,0.10);
-    }
-    .channel-icon { font-size: 24px; }
-    .channel-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-    .channel-desc { font-size: 10px; color: var(--text-muted); text-align: center; }
-
-    /* ── Resend timer ── */
-    #resendRow { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:10px; font-size:13px; }
-    #resendBtn { padding:4px 14px; font-size:12px; }
-    #resendTimer { color:var(--text-muted); font-size:12px; }
-
-    /* ── OTP channel badge ── */
-    .channel-sent-badges { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
-    .ch-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:rgba(16,185,129,0.15); color:var(--success-light); border:1px solid rgba(16,185,129,0.3); }
-  </style>
 </head>
 <body>
-<div class="register-page">
-  <div class="register-container">
+<div class="login-page">
 
-    <!-- Header -->
-    <div class="register-header">
-      <div class="logo-row">
-        <div class="logo-icon">📋</div>
+  <!-- Left panel -->
+  <div class="login-left">
+    <div class="login-left-content">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:36px;">
+        <div class="login-logo-icon">🏢</div>
         <div>
-          <h1>Visitor Pre-Registration</h1>
+          <div style="font-size:18px;font-weight:800;color:var(--text-primary);">VRGT System</div>
+          <div style="font-size:12px;color:var(--text-muted);">Visitor Route Guidance &amp; Tracking</div>
         </div>
       </div>
-      <p>Complete all 3 steps to receive your secure QR pass</p>
+
+      <h2>Create Your<br>Guest Account</h2>
+      <p>Register as a hotel guest to access your room dashboard, QR entry pass, room service ordering, and more.</p>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🔐</div>
+          <span>AES-256 encrypted personal QR entry pass</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🍽</div>
+          <span>Order room service directly from your device</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🛎</div>
+          <span>Request housekeeping and amenities instantly</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⭐</div>
+          <span>Track your stay and submit feedback</span>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;padding:16px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--primary-light);margin-bottom:6px;">👔 Are you staff?</div>
+        <div style="font-size:12px;color:var(--text-muted);">Staff accounts (Manager, Front Office, Chef, etc.) are created by your administrator. Contact your admin to get your credentials.</div>
+      </div>
     </div>
+  </div>
 
-    <!-- Step indicators -->
-    <div class="steps mb-6" id="stepIndicator">
-      <div class="step active" id="si1">
-        <div class="step-circle">1</div>
-        <div class="step-label">Your Details</div>
-        <div class="step-line"></div>
-      </div>
-      <div class="step" id="si2">
-        <div class="step-circle">2</div>
-        <div class="step-label">OTP Verify</div>
-        <div class="step-line"></div>
-      </div>
-      <div class="step" id="si3">
-        <div class="step-circle">3</div>
-        <div class="step-label">QR Pass</div>
-      </div>
-    </div>
+  <!-- Right panel -->
+  <div class="login-right">
+    <div class="login-box" style="max-width:460px;">
+      <div class="login-title">Create Account</div>
+      <div class="login-subtitle">Guest self-registration — takes 30 seconds</div>
 
-    <!-- Card -->
-    <div class="register-card">
+      <div id="regError" class="info-box danger hidden" style="margin-bottom:16px;"></div>
+      <div id="regSuccess" class="info-box success hidden" style="margin-bottom:16px;"></div>
 
-      <!-- ── Step 1: Registration ── -->
-      <div id="step1">
-        <div id="regError" class="info-box danger hidden mb-4"></div>
-        <form id="registerForm" onsubmit="handleRegister(event)">
+      <form id="registerForm" onsubmit="handleRegister(event)">
 
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">Full Name *</label>
-              <input type="text" id="fullName" class="form-control" placeholder="John Doe" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email Address *</label>
-              <input type="email" id="email" class="form-control" placeholder="john@company.com" required>
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">Phone Number * <span style="font-size:10px;color:var(--text-muted);">(10 digits, India)</span></label>
-              <input type="tel" id="phone" class="form-control" placeholder="9876543210" maxlength="10" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Company / Organisation</label>
-              <input type="text" id="company" class="form-control" placeholder="Company Name">
-            </div>
-          </div>
-
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">ID Type</label>
-              <select id="idType" class="form-control">
-                <option value="Aadhar">Aadhar Card</option>
-                <option value="Passport">Passport</option>
-                <option value="DrivingLicense">Driving License</option>
-                <option value="PAN">PAN Card</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">ID Number</label>
-              <input type="text" id="idNumber" class="form-control" placeholder="XXXX XXXX XXXX">
-            </div>
-          </div>
-
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div class="form-group">
-            <label class="form-label">Purpose of Visit *</label>
-            <input type="text" id="purpose" class="form-control" placeholder="e.g. Business Meeting, Interview, Delivery…" required>
-          </div>
-
-          <div class="grid-2">
-            <div class="form-group">
-              <label class="form-label">Host Name *</label>
-              <input type="text" id="hostName" class="form-control" placeholder="Person you're meeting" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Host Email</label>
-              <input type="email" id="hostEmail" class="form-control" placeholder="host@company.com">
+            <label class="form-label">Full Name *</label>
+            <div class="input-group">
+              <span class="input-icon">👤</span>
+              <input type="text" id="fullName" class="form-control" placeholder="John Doe" required autocomplete="name">
             </div>
           </div>
-
-          <!-- OTP Channel selector -->
           <div class="form-group">
-            <label class="form-label">Send OTP via *</label>
-            <div class="channel-grid">
-
-              <label class="channel-card">
-                <input type="checkbox" name="otpChannel" value="sms" id="chSms" checked>
-                <div class="channel-label">
-                  <span class="channel-icon">💬</span>
-                  <span class="channel-name">SMS</span>
-                  <span class="channel-desc">Text message to your phone</span>
-                </div>
-              </label>
-
-              <label class="channel-card">
-                <input type="checkbox" name="otpChannel" value="whatsapp" id="chWa">
-                <div class="channel-label">
-                  <span class="channel-icon">📲</span>
-                  <span class="channel-name">WhatsApp</span>
-                  <span class="channel-desc">WhatsApp message</span>
-                </div>
-              </label>
-
-              <label class="channel-card">
-                <input type="checkbox" name="otpChannel" value="email" id="chEmail">
-                <div class="channel-label">
-                  <span class="channel-icon">📧</span>
-                  <span class="channel-name">Email</span>
-                  <span class="channel-desc">Sent to your inbox</span>
-                </div>
-              </label>
-
+            <label class="form-label">Username *</label>
+            <div class="input-group">
+              <span class="input-icon">🔖</span>
+              <input type="text" id="username" class="form-control" placeholder="johndoe" required autocomplete="username"
+                     pattern="[a-zA-Z0-9_]{3,20}" title="3–20 characters, letters, numbers, underscore only">
             </div>
           </div>
-
-          <button type="submit" class="btn btn-primary btn-lg btn-block" id="registerBtn">
-            🚀 Register &amp; Send OTP
-          </button>
-        </form>
-
-        <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);">
-          Already registered? <a href="/login">Sign in →</a>
-        </div>
-      </div>
-
-      <!-- ── Step 2: OTP ── -->
-      <div id="step2" class="hidden">
-        <div style="text-align:center;padding:10px 0 20px;">
-          <div style="font-size:48px;margin-bottom:12px;">🔐</div>
-          <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Verify Your Identity</h2>
-          <p class="text-muted text-sm" id="otpSubtitle">Enter the 6-digit OTP sent to your registered channels</p>
         </div>
 
-        <!-- Channel badges showing where OTP was sent -->
-        <div class="channel-sent-badges" id="sentBadges"></div>
-
-        <!-- Dev-mode OTP hint (only shown when MSG91 not configured) -->
-        <div id="otpDemoBox" class="info-box info mb-4 hidden">
-          <span>ℹ</span>
-          <span id="otpDemoText"></span>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <div class="input-group">
+            <span class="input-icon">📧</span>
+            <input type="email" id="email" class="form-control" placeholder="john@example.com" required autocomplete="email">
+          </div>
         </div>
 
-        <div class="otp-inputs" id="otpInputs">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
-          <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="\d">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <div class="input-group">
+            <span class="input-icon">📱</span>
+            <input type="tel" id="phone" class="form-control" placeholder="9876543210" maxlength="15" autocomplete="tel">
+          </div>
         </div>
 
-        <div id="otpError" class="info-box danger hidden mb-4"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <div class="input-group">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="password" class="form-control" placeholder="Min 6 characters" required
+                     minlength="6" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <div class="input-group">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="confirmPassword" class="form-control" placeholder="Repeat password" required
+                     autocomplete="new-password">
+            </div>
+          </div>
+        </div>
 
-        <button class="btn btn-success btn-lg btn-block" id="verifyBtn" onclick="verifyOtp()">
-          ✅ Verify OTP
+        <div id="pwdStrength" style="height:4px;border-radius:2px;background:var(--surface-2);margin:-4px 0 12px;overflow:hidden;">
+          <div id="pwdStrengthBar" style="height:100%;width:0;transition:width .3s,background .3s;border-radius:2px;"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-block" id="registerBtn">
+          Create Account
         </button>
+      </form>
 
-        <!-- Resend row -->
-        <div id="resendRow">
-          <span style="color:var(--text-muted);">Didn't receive it?</span>
-          <button class="btn btn-outline btn-sm" id="resendBtn" onclick="resendOtp()" disabled>
-            ⟳ Resend OTP
-          </button>
-          <span id="resendTimer">Resend in <strong id="resendCountdown">30</strong>s</span>
-        </div>
-
-        <!-- Resend channel selector -->
-        <div id="resendChannelRow" style="display:none;text-align:center;margin-top:10px;">
-          <span style="font-size:12px;color:var(--text-muted);margin-right:8px;">Resend via:</span>
-          <label style="font-size:12px;cursor:pointer;margin-right:8px;">
-            <input type="checkbox" id="rchSms" value="sms" checked style="margin-right:3px;">SMS
-          </label>
-          <label style="font-size:12px;cursor:pointer;margin-right:8px;">
-            <input type="checkbox" id="rchWa" value="whatsapp" style="margin-right:3px;">WhatsApp
-          </label>
-          <label style="font-size:12px;cursor:pointer;">
-            <input type="checkbox" id="rchEmail" value="email" style="margin-right:3px;">Email
-          </label>
-        </div>
-
-        <button class="btn btn-ghost btn-block mt-2" onclick="setStep(1)">← Back to Details</button>
+      <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);">
+        Already have an account? <a href="/login" style="color:var(--primary-light);font-weight:600;">Sign in →</a>
       </div>
-
-      <!-- ── Step 3: QR Pass ── -->
-      <div id="step3" class="hidden">
-        <div class="qr-display">
-          <div class="info-box success mb-4">
-            <span style="font-size:22px;">✓</span>
-            <div>
-              <div style="font-weight:700;font-size:15px;">Registration Complete!</div>
-              <div style="font-size:13px;margin-top:2px;">Your QR pass is ready. Show it at the gate.</div>
-            </div>
-          </div>
-
-          <div class="qr-frame">
-            <img id="qrImage" src="" alt="QR Pass" style="width:200px;height:200px;display:block;">
-          </div>
-
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;">
-            ⏱ Pass expires in 24 hours — save or print it now
-          </div>
-
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="window.print()">🖨 Print Pass</button>
-            <button class="btn btn-outline" onclick="downloadQR()">💾 Save QR</button>
-            <button class="btn btn-ghost" onclick="window.location.href='/login'">Done →</button>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /register-card -->
+    </div>
   </div>
 </div>
 
 <script src="/js/app.js"></script>
 <script>
-let _visitorId       = null;
-let _resendInterval  = null;
-let _selectedChannels = 'sms';
-
-/* ── OTP digit keyboard navigation ── */
-document.addEventListener('DOMContentLoaded', () => {
-  const digits = document.querySelectorAll('.otp-digit');
-  digits.forEach((d, i) => {
-    d.addEventListener('input', e => {
-      e.target.value = e.target.value.replace(/\D/g, '');
-      if (e.target.value && i < digits.length - 1) digits[i + 1].focus();
-    });
-    d.addEventListener('keydown', e => {
-      if (e.key === 'Backspace' && !d.value && i > 0) digits[i - 1].focus();
-      if (e.key === 'ArrowLeft'  && i > 0) digits[i - 1].focus();
-      if (e.key === 'ArrowRight' && i < digits.length - 1) digits[i + 1].focus();
-    });
-    d.addEventListener('paste', e => {
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-      [...text].slice(0, 6).forEach((ch, j) => { if (digits[i + j]) digits[i + j].value = ch; });
-      const next = digits[Math.min(i + text.length, 5)];
-      if (next) next.focus();
-    });
-  });
-
-  // At least one channel must stay checked
-  document.querySelectorAll('input[name="otpChannel"]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const checked = document.querySelectorAll('input[name="otpChannel"]:checked');
-      if (checked.length === 0) cb.checked = true;
-    });
-  });
+/* ── Password strength indicator ── */
+document.getElementById('password').addEventListener('input', function () {
+  const v = this.value;
+  let score = 0;
+  if (v.length >= 6)  score++;
+  if (v.length >= 10) score++;
+  if (/[A-Z]/.test(v)) score++;
+  if (/[0-9]/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v)) score++;
+  const bar = document.getElementById('pwdStrengthBar');
+  const colors = ['', '#ef4444', '#f59e0b', '#f59e0b', '#10b981', '#10b981'];
+  bar.style.width  = (score / 5 * 100) + '%';
+  bar.style.background = colors[score] || 'transparent';
 });
 
-function getOtpValue() {
-  return [...document.querySelectorAll('.otp-digit')].map(d => d.value).join('');
-}
-
-function getSelectedChannels() {
-  return [...document.querySelectorAll('input[name="otpChannel"]:checked')]
-    .map(cb => cb.value).join(',');
-}
-
-function setStep(n) {
-  [1, 2, 3].forEach(s => {
-    document.getElementById('step' + s).classList.toggle('hidden', s !== n);
-    const si = document.getElementById('si' + s);
-    si.classList.remove('active', 'completed');
-    if (s < n) {
-      si.classList.add('completed');
-      si.querySelector('.step-circle').textContent = '✓';
-    } else if (s === n) {
-      si.classList.add('active');
-    }
-  });
-  if (n === 2) startResendCountdown();
-}
-
-/* ── Step 1 submit ── */
 async function handleRegister(e) {
   e.preventDefault();
   const btn = document.getElementById('registerBtn');
-  const err = document.getElementById('regError');
-  err.classList.add('hidden');
+  const errEl = document.getElementById('regError');
+  const okEl  = document.getElementById('regSuccess');
+  errEl.classList.add('hidden');
+  okEl.classList.add('hidden');
 
-  _selectedChannels = getSelectedChannels();
-  if (!_selectedChannels) {
-    err.innerHTML = 'Please select at least one OTP delivery channel.';
-    err.classList.remove('hidden');
+  const password        = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
+
+  if (password !== confirmPassword) {
+    errEl.innerHTML = '⚠ Passwords do not match.';
+    errEl.classList.remove('hidden');
     return;
   }
 
-  setLoading(btn, 'Sending OTP…');
+  setLoading(btn, 'Creating account…');
 
-  const result = await API.post('/api/visitor/register', {
-    fullName:   document.getElementById('fullName').value.trim(),
-    email:      document.getElementById('email').value.trim(),
-    phone:      document.getElementById('phone').value.trim(),
-    company:    document.getElementById('company').value.trim(),
-    idType:     document.getElementById('idType').value,
-    idNumber:   document.getElementById('idNumber').value.trim(),
-    purpose:    document.getElementById('purpose').value.trim(),
-    hostName:   document.getElementById('hostName').value.trim(),
-    hostEmail:  document.getElementById('hostEmail').value.trim(),
-    otpChannel: _selectedChannels,
+  const result = await API.post('/api/auth/register', {
+    fullName: document.getElementById('fullName').value.trim(),
+    username: document.getElementById('username').value.trim(),
+    email:    document.getElementById('email').value.trim(),
+    phone:    document.getElementById('phone').value.trim(),
+    password,
   });
 
-  clearLoading(btn);
-
   if (result.success) {
-    _visitorId = result.data.visitorId;
-    buildSentBadges(_selectedChannels);
-    buildSubtitle(_selectedChannels);
-
-    // Show OTP in dev mode (message contains the OTP)
-    const msg = result.message || '';
-    const otpMatch = msg.match(/OTP:\s*(\d{6})/);
-    if (otpMatch) {
-      document.getElementById('otpDemoText').textContent =
-        'Dev mode — OTP: ' + otpMatch[1] + '  (configure MSG91 templates for live delivery)';
-      document.getElementById('otpDemoBox').classList.remove('hidden');
-    }
-
-    setStep(2);
-    document.querySelector('.otp-digit').focus();
+    okEl.innerHTML = '✓ Account created! Redirecting to login…';
+    okEl.classList.remove('hidden');
+    document.getElementById('registerForm').reset();
+    setTimeout(() => { window.location.href = '/login'; }, 1800);
   } else {
-    err.innerHTML = result.message || 'Registration failed. Please try again.';
-    err.classList.remove('hidden');
+    errEl.innerHTML = '⚠ ' + (result.message || 'Registration failed. Please try again.');
+    errEl.classList.remove('hidden');
+    clearLoading(btn);
   }
-}
-
-function buildSentBadges(channels) {
-  const iconMap = { sms:'💬 SMS', whatsapp:'📲 WhatsApp', email:'📧 Email' };
-  const container = document.getElementById('sentBadges');
-  container.innerHTML = channels.split(',').map(c =>
-    `<span class="ch-badge">✓ ${iconMap[c.trim()] || c}</span>`
-  ).join('');
-}
-
-function buildSubtitle(channels) {
-  const parts = [];
-  if (channels.includes('sms'))       parts.push('SMS to your phone');
-  if (channels.includes('whatsapp'))  parts.push('WhatsApp message');
-  if (channels.includes('email'))     parts.push('email to your inbox');
-  document.getElementById('otpSubtitle').textContent =
-    'Enter the 6-digit OTP sent via ' + parts.join(' + ');
-}
-
-/* ── Step 2 verify ── */
-async function verifyOtp() {
-  const otp = getOtpValue();
-  if (otp.length < 6) { Toast.warning('Please enter all 6 digits'); return; }
-
-  const btn = document.getElementById('verifyBtn');
-  const err = document.getElementById('otpError');
-  err.classList.add('hidden');
-  setLoading(btn, 'Verifying…');
-
-  const result = await API.post('/api/visitor/verify-otp', {
-    visitorId: String(_visitorId),
-    otp,
-  });
-
-  clearLoading(btn);
-
-  if (result.success) {
-    const v = result.data;
-    if (v.qrImageBase64) {
-      document.getElementById('qrImage').src = 'data:image/png;base64,' + v.qrImageBase64;
-    }
-    clearInterval(_resendInterval);
-    setStep(3);
-    Toast.success('Identity verified! Your QR pass is ready.');
-  } else {
-    err.innerHTML = result.message || 'Invalid OTP. Please try again.';
-    err.classList.remove('hidden');
-    // Shake OTP inputs
-    document.getElementById('otpInputs').style.animation = 'none';
-    setTimeout(() => document.getElementById('otpInputs').style.animation = '', 10);
-  }
-}
-
-/* ── Resend OTP ── */
-function startResendCountdown() {
-  clearInterval(_resendInterval);
-  let secs = 30;
-  const btn   = document.getElementById('resendBtn');
-  const timer = document.getElementById('resendTimer');
-  const row   = document.getElementById('resendChannelRow');
-
-  btn.disabled = true;
-  row.style.display = 'none';
-  timer.innerHTML = 'Resend in <strong id="resendCountdown">' + secs + '</strong>s';
-
-  _resendInterval = setInterval(() => {
-    secs--;
-    const el = document.getElementById('resendCountdown');
-    if (el) el.textContent = secs;
-    if (secs <= 0) {
-      clearInterval(_resendInterval);
-      btn.disabled = false;
-      timer.innerHTML = '';
-      row.style.display = 'block';
-    }
-  }, 1000);
-}
-
-async function resendOtp() {
-  const btn = document.getElementById('resendBtn');
-  setLoading(btn, 'Sending…');
-
-  // Gather resend channels
-  const resendChannels = [...document.querySelectorAll('#resendChannelRow input:checked')]
-    .map(cb => cb.value).join(',') || 'sms';
-
-  const result = await API.post('/api/visitor/' + _visitorId + '/resend-otp', {
-    channels: resendChannels,
-  });
-
-  clearLoading(btn);
-
-  if (result.success) {
-    Toast.success('OTP resent via ' + resendChannels.replace(',', ' + '));
-    // Clear current inputs
-    document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
-    document.querySelector('.otp-digit').focus();
-    startResendCountdown();
-  } else {
-    Toast.error(result.message || 'Resend failed');
-  }
-}
-
-/* ── QR download ── */
-function downloadQR() {
-  const img = document.getElementById('qrImage');
-  if (!img.src || img.src === window.location.href) return;
-  const a = document.createElement('a');
-  a.href = img.src;
-  a.download = 'vrgt-qr-pass.png';
-  a.click();
 }
 </script>
 </body>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Front Office — Grand VRGT Hotel</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <style>
+    .checkin-card {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      display: flex; align-items: center; gap: 14px;
+      transition: all var(--t-normal);
+      position: relative;
+    }
+    .checkin-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px 0 0 3px; background: var(--primary); }
+    .checkin-card.gate::before   { background: var(--info); }
+    .checkin-card.reception::before { background: var(--warning); }
+    .checkin-card.enroute::before { background: var(--purple); }
+    .checkin-card:hover { border-color: rgba(99,102,241,0.35); }
+
+    .cc-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: white; flex-shrink: 0; }
+    .cc-info { flex: 1; min-width: 0; }
+    .cc-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cc-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .cc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .scan-input {
+      background: var(--bg-input);
+      border: 2px dashed rgba(99,102,241,0.4);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      text-align: center;
+      transition: all var(--t-normal);
+    }
+    .scan-input:focus-within { border-color: var(--primary); border-style: solid; background: rgba(99,102,241,0.04); }
+    .scan-input input { background: transparent; border: none; outline: none; font-size: 16px; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); width: 100%; text-align: center; }
+
+    .quick-action {
+      padding: 16px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--t-normal);
+    }
+    .quick-action:hover { border-color: var(--primary); background: rgba(99,102,241,0.06); transform: translateY(-2px); }
+    .quick-action .qa-icon { font-size: 28px; margin-bottom: 8px; }
+    .quick-action .qa-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">🛎</div>
+      <div><h2>Front Office</h2><small>Guest Services</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/front-office" class="active"><span class="nav-icon">🛎</span>Check-In Queue</a></li>
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Scanner</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Room Status</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+      <li><a href="/emergency"><span class="nav-icon">🚨</span>Emergency</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🛎 Front Office</h1>
+      <div class="header-actions">
+        <div class="live-dot">Live Queue</div>
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn notification-bell">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">FO</div>
+          <span class="user-name">Front Office</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Stats -->
+      <div class="stats-grid mb-4" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card warning"><div class="stat-row"><div><div class="stat-value" id="kpi1">0</div><div class="stat-label">Awaiting Check-In</div></div><div class="stat-icon">⏳</div></div></div>
+        <div class="stat-card success"><div class="stat-row"><div><div class="stat-value" id="kpi2">0</div><div class="stat-label">Checked In Today</div></div><div class="stat-icon">✅</div></div></div>
+        <div class="stat-card info"><div class="stat-row"><div><div class="stat-value" id="kpi3">0</div><div class="stat-label">At Gate Now</div></div><div class="stat-icon">🚧</div></div></div>
+        <div class="stat-card primary"><div class="stat-row"><div><div class="stat-value" id="kpi4">0</div><div class="stat-label">Rooms Available</div></div><div class="stat-icon">🚪</div></div></div>
+        <div class="stat-card secondary"><div class="stat-row"><div><div class="stat-value" id="kpi5">0</div><div class="stat-label">En Route</div></div><div class="stat-icon">🗺</div></div></div>
+      </div>
+
+      <div class="grid-2-1 mb-4">
+
+        <!-- Guest Queue -->
+        <div class="card">
+          <div class="card-header">
+            <h3>👥 Guest Check-In Queue</h3>
+            <div class="card-actions">
+              <select id="queueFilter" class="form-control" style="width:150px;padding:5px 10px;font-size:12px;" onchange="loadQueue()">
+                <option value="">All Statuses</option>
+                <option value="CHECKED_IN_GATE">At Gate</option>
+                <option value="AT_RECEPTION">At Reception</option>
+                <option value="HOST_CONFIRMED">Host Confirmed</option>
+                <option value="EN_ROUTE">En Route</option>
+              </select>
+              <button class="btn btn-outline btn-sm" onclick="loadQueue()">⟳</button>
+            </div>
+          </div>
+          <div id="guestQueue" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="loading-state"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- Right Panel: QR Scan + Quick Actions -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- QR Quick Scan -->
+          <div class="card">
+            <div class="card-header"><h3>🔍 Quick QR Scan</h3></div>
+            <div class="scan-input">
+              <div style="font-size:32px;margin-bottom:8px;">📷</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Paste or type QR code</div>
+              <input type="text" id="qrInput" placeholder="QR code here…" onkeydown="if(event.key==='Enter') scanQR()">
+            </div>
+            <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="scanQR()">🔍 Validate QR</button>
+            <div id="scanResult" class="hidden" style="margin-top:12px;"></div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-header"><h3>⚡ Quick Actions</h3></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="quick-action" onclick="window.location.href='/register'">
+                <div class="qa-icon">📝</div>
+                <div class="qa-label">New Registration</div>
+              </div>
+              <div class="quick-action" onclick="window.location.href='/rooms'">
+                <div class="qa-icon">🚪</div>
+                <div class="qa-label">Room Status</div>
+              </div>
+              <div class="quick-action" onclick="window.location.href='/indoor-map'">
+                <div class="qa-icon">🗺</div>
+                <div class="qa-label">Indoor Map</div>
+              </div>
+              <div class="quick-action" onclick="window.location.href='/notifications'">
+                <div class="qa-icon">🔔</div>
+                <div class="qa-label">Notifications</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Check-In Modal -->
+    <div id="checkinModal" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>🛎 Complete Check-In</h3>
+          <button class="modal-close" onclick="closeCheckin()">×</button>
+        </div>
+        <div id="checkinVisitorInfo" style="margin-bottom:16px;"></div>
+        <div class="form-group">
+          <label class="form-label">Assign Room</label>
+          <select id="roomSelect" class="form-control">
+            <option value="">Auto-assign best available</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeCheckin()">Cancel</button>
+          <button class="btn btn-primary" id="checkinBtn" onclick="completeCheckin()">✅ Complete Check-In</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let _selectedVisitorId = null;
+
+async function loadQueue() {
+  const filter = document.getElementById('queueFilter').value;
+  const url = filter ? '/api/visitor/status/' + filter : '/api/visitor/active';
+  const r = await API.get(url);
+  const container = document.getElementById('guestQueue');
+
+  // Update KPIs
+  const stats = await API.get('/api/admin/dashboard-stats');
+  if (stats.success && stats.data) {
+    document.getElementById('kpi1').textContent = stats.data.pendingAtReception || 0;
+    document.getElementById('kpi2').textContent = stats.data.activeVisitors || 0;
+    document.getElementById('kpi3').textContent = stats.data.pendingAtGate || 0;
+    document.getElementById('kpi4').textContent = stats.data.availableRooms || 0;
+    const d = stats.data;
+    const enRoute = (d.activeVisitors||0) - (d.pendingAtGate||0) - (d.pendingAtReception||0) - (d.inMeetings||0);
+    document.getElementById('kpi5').textContent = Math.max(0, enRoute);
+  }
+
+  if (!r.success || !r.data?.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><h3>Queue Empty</h3><p class="text-muted">No guests waiting</p></div>';
+    return;
+  }
+
+  const statusMap = { CHECKED_IN_GATE:'gate', AT_RECEPTION:'reception', HOST_CONFIRMED:'reception', EN_ROUTE:'enroute', IN_MEETING:'enroute' };
+  container.innerHTML = r.data.map(v => {
+    const cls = statusMap[v.status] || '';
+    return `
+      <div class="checkin-card ${cls}">
+        <div class="cc-avatar" style="background:${avatarColor(v.fullName)}">${initials(v.fullName)}</div>
+        <div class="cc-info">
+          <div class="cc-name">${v.fullName}</div>
+          <div class="cc-meta">🏢 ${v.company||'—'} · 🎯 ${v.purpose||'—'} · Host: ${v.hostName}</div>
+          <div class="cc-meta" style="margin-top:3px;">${getStatusBadge(v.status)} ${v.assignedRoomId ? '· Room: <strong>'+v.assignedRoomId+'</strong>' : ''}</div>
+        </div>
+        <div class="cc-actions">
+          ${v.status === 'CHECKED_IN_GATE' || v.status === 'AT_RECEPTION'
+            ? `<button class="btn btn-primary btn-sm" onclick="openCheckin(${v.id},'${v.fullName.replace(/'/g,"\\'")}')">Check In</button>`
+            : ''}
+          ${v.status === 'EN_ROUTE' || v.status === 'IN_MEETING'
+            ? `<button class="btn btn-outline btn-sm" onclick="viewRoute(${v.id})">View Route</button>`
+            : ''}
+          <button class="btn btn-ghost btn-sm" onclick="checkoutGuest(${v.id},'${v.fullName.replace(/'/g,"\\'")}')">Checkout</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function openCheckin(id, name) {
+  _selectedVisitorId = id;
+  document.getElementById('checkinVisitorInfo').innerHTML = `
+    <div style="padding:14px;background:var(--bg-card-2);border-radius:var(--r-md);border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:40px;height:40px;border-radius:50%;background:${avatarColor(name)};display:flex;align-items:center;justify-content:center;font-weight:700;color:white;">${initials(name)}</div>
+        <div><div style="font-weight:700;">${name}</div><div style="font-size:12px;color:var(--text-muted);">Guest ID: ${id}</div></div>
+      </div>
+    </div>`;
+  // Load available rooms
+  const rooms = await API.get('/api/rooms/available');
+  const select = document.getElementById('roomSelect');
+  select.innerHTML = '<option value="">Auto-assign best available</option>';
+  if (rooms.success && rooms.data) {
+    rooms.data.forEach(r => {
+      select.innerHTML += `<option value="${r.roomCode}">${r.roomCode} — ${r.roomName} (Floor ${r.floor}, Cap: ${r.capacity})</option>`;
+    });
+  }
+  document.getElementById('checkinModal').classList.remove('hidden');
+}
+
+async function completeCheckin() {
+  const btn = document.getElementById('checkinBtn');
+  const roomCode = document.getElementById('roomSelect').value;
+  setLoading(btn, 'Processing…');
+
+  let assignedRoom = roomCode;
+  if (!assignedRoom) {
+    const auto = await API.post('/api/reception/auto-assign-room', { capacity: 2 });
+    if (auto.success) assignedRoom = auto.data.roomCode;
+    else { Toast.error('No available rooms'); clearLoading(btn); return; }
+  }
+
+  const r = await API.post('/api/reception/checkin', {
+    visitorId: String(_selectedVisitorId),
+    roomCode: assignedRoom,
+    receptionist: currentUser().username || 'frontoffice1'
+  });
+  clearLoading(btn);
+
+  if (r.success) {
+    Toast.success('Guest checked in → Room ' + assignedRoom);
+    closeCheckin();
+    loadQueue();
+  } else {
+    Toast.error(r.message || 'Check-in failed');
+  }
+}
+
+function closeCheckin() { document.getElementById('checkinModal').classList.add('hidden'); }
+
+async function checkoutGuest(id, name) {
+  if (!await confirm2('Check out ' + name + '?')) return;
+  const r = await API.post('/api/visitor/' + id + '/checkout');
+  if (r.success) { Toast.success(name + ' checked out'); loadQueue(); }
+  else Toast.error(r.message);
+}
+
+function viewRoute(id) { window.location.href = '/indoor-map?visitor=' + id; }
+
+async function scanQR() {
+  const qrData = document.getElementById('qrInput').value.trim();
+  if (!qrData) { Toast.warning('Enter a QR code first'); return; }
+  const r = await API.post('/api/gate/scan-qr', {
+    qrData, gateId: 'FRONT_DESK', guardUsername: currentUser().username || 'frontoffice1'
+  });
+  const resultEl = document.getElementById('scanResult');
+  resultEl.classList.remove('hidden');
+  if (r.success) {
+    const v = r.data?.visitor;
+    resultEl.innerHTML = `<div class="result-box success">
+      <h3>✅ Valid Guest Pass</h3>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;">${v?.fullName || 'Guest'}</div>
+      <div style="font-size:12px;color:var(--success-light);">${v?.purpose||''} · Host: ${v?.hostName||''}</div>
+    </div>`;
+    document.getElementById('qrInput').value = '';
+    loadQueue();
+  } else {
+    resultEl.innerHTML = `<div class="result-box danger"><h3>❌ Invalid QR</h3><div style="font-size:12px;color:var(--danger-light);">${r.message||'Unrecognised or expired pass'}</div></div>`;
+  }
+}
+
+// Real-time WebSocket queue updates
+function onReceptionEvent(data) { loadQueue(); }
+function onGateEvent(data)      { loadQueue(); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadQueue();
+  setInterval(loadQueue, 8000);
+});
+</script>
+</body>
+</html>

@@ -101,13 +101,13 @@ public class AdminApiController {
 
     // ── User management ───────────────────────────────────────────────────────
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('FOUNDER','MANAGER','ADMIN')")
     @GetMapping("/users")
     public ResponseEntity<?> getUsers() {
         return ResponseEntity.ok(ApiResponseDTO.success("All users", appUserRepository.findAll()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('FOUNDER','MANAGER','ADMIN')")
     @PostMapping("/users")
     public ResponseEntity<?> createUser(@RequestBody Map<String, String> body) {
         try {
@@ -115,7 +115,10 @@ public class AdminApiController {
             String password = body.get("password");
             String fullName = body.get("fullName");
             String email    = body.get("email");
-            if (username == null || password == null || fullName == null || email == null) {
+            if (username == null || username.isBlank() ||
+                password == null || password.isBlank() ||
+                fullName == null || fullName.isBlank() ||
+                email    == null || email.isBlank()) {
                 return ResponseEntity.badRequest().body(ApiResponseDTO.error("username, password, fullName and email are required"));
             }
             if (appUserRepository.existsByUsername(username)) {
@@ -124,8 +127,8 @@ public class AdminApiController {
             if (appUserRepository.existsByEmail(email)) {
                 return ResponseEntity.badRequest().body(ApiResponseDTO.error("Email already registered"));
             }
-            UserRole role = UserRole.HOST;
-            try { role = UserRole.valueOf(body.getOrDefault("role", "HOST")); } catch (Exception ignored) {}
+            UserRole role = UserRole.CLIENT;
+            try { role = UserRole.valueOf(body.getOrDefault("role", "CLIENT")); } catch (Exception ignored) {}
             AppUser user = AppUser.builder()
                     .username(username)
                     .password(passwordEncoder.encode(password))
@@ -137,14 +140,14 @@ public class AdminApiController {
                     .active(true)
                     .build();
             AppUser saved = appUserRepository.save(user);
-            auditService.log("USER_CREATED", "APP_USER", saved.getId(), "admin", "ADMIN", "User created: " + username);
+            auditService.log("USER_CREATED", "APP_USER", saved.getId(), "system", role.name(), "User created: " + username);
             return ResponseEntity.ok(ApiResponseDTO.success("User created", saved));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('FOUNDER','MANAGER','ADMIN')")
     @PutMapping("/users/{id}")
     public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody Map<String, String> body) {
         try {
@@ -164,14 +167,14 @@ public class AdminApiController {
                 user.setActive(Boolean.parseBoolean(body.get("active")));
             }
             AppUser saved = appUserRepository.save(user);
-            auditService.log("USER_UPDATED", "APP_USER", id, "admin", "ADMIN", "User updated: " + user.getUsername());
+            auditService.log("USER_UPDATED", "APP_USER", id, "system", user.getRole().name(), "User updated: " + user.getUsername());
             return ResponseEntity.ok(ApiResponseDTO.success("User updated", saved));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('FOUNDER','MANAGER','ADMIN')")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deactivateUser(@PathVariable Long id) {
         try {
@@ -179,7 +182,7 @@ public class AdminApiController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
             user.setActive(false);
             appUserRepository.save(user);
-            auditService.log("USER_DEACTIVATED", "APP_USER", id, "admin", "ADMIN", "User deactivated: " + user.getUsername());
+            auditService.log("USER_DEACTIVATED", "APP_USER", id, "system", user.getRole().name(), "User deactivated: " + user.getUsername());
             return ResponseEntity.ok(ApiResponseDTO.success("User deactivated", null));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));

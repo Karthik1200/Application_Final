@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard — Grand VRGT Hotel</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .shift-card {
+      padding: 14px 16px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px;
+    }
+    .shift-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; }
+    .shift-info { flex: 1; }
+    .shift-name { font-size: 13px; font-weight: 600; }
+    .shift-dept { font-size: 11px; color: var(--text-muted); }
+    .shift-time { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+    .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; }
+    .room-tile {
+      aspect-ratio: 1;
+      border-radius: var(--r-sm);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      cursor: pointer;
+      transition: transform var(--t-fast);
+      border: 1px solid transparent;
+    }
+    .room-tile:hover { transform: scale(1.06); }
+    .room-tile.available  { background: rgba(16,185,129,0.12); color: var(--success-light);  border-color: rgba(16,185,129,0.25); }
+    .room-tile.occupied   { background: rgba(99,102,241,0.15);  color: var(--primary-light);   border-color: rgba(99,102,241,0.3); }
+    .room-tile.checkout   { background: rgba(245,158,11,0.12); color: var(--accent-light);   border-color: rgba(245,158,11,0.25); }
+    .room-tile.cleaning   { background: rgba(6,182,212,0.12);  color: var(--secondary-light); border-color: rgba(6,182,212,0.25); }
+    .room-tile.maintenance{ background: rgba(100,116,139,0.12);color: var(--text-muted);      border-color: rgba(100,116,139,0.2); }
+    .room-tile .rt-num { font-size: 12px; font-weight: 800; }
+    .room-tile .rt-status { font-size: 9px; margin-top: 2px; opacity: 0.8; }
+
+    .approval-item {
+      padding: 14px 16px;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .approval-item .ai-icon { font-size: 22px; flex-shrink: 0; }
+    .approval-item .ai-text { flex: 1; }
+    .approval-item .ai-title { font-size: 13px; font-weight: 600; }
+    .approval-item .ai-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏨</div>
+      <div><h2>Grand VRGT</h2><small>Manager View</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/manager-dashboard" class="active"><span class="nav-icon">🏨</span>Operations Hub</a></li>
+      <li><a href="/front-office"><span class="nav-icon">🛎</span>Front Office</a></li>
+      <li><a href="/room-service"><span class="nav-icon">🛏</span>Room Service</a></li>
+      <li><a href="/chef-dashboard"><span class="nav-icon">👨‍🍳</span>Kitchen</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Live Tracking</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/emergency"><span class="nav-icon">🚨</span>Emergency</a></li>
+      <li><a href="/admin"><span class="nav-icon">⚙</span>Admin Panel</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🏨 Operations Hub</h1>
+      <div class="header-actions">
+        <div class="live-dot">Live Operations</div>
+        <span class="header-time" id="headerTime"></span>
+        <a href="/notifications" class="icon-btn">🔔<span class="badge hidden">0</span></a>
+        <div class="user-pill">
+          <div class="user-avatar">M</div>
+          <span class="user-name">Manager</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- KPI strip -->
+      <div class="stats-grid mb-4" style="grid-template-columns:repeat(6,1fr);">
+        <div class="stat-card primary"><div class="stat-row"><div><div class="stat-value" id="s1">0</div><div class="stat-label">Total Guests</div></div><div class="stat-icon">🧳</div></div></div>
+        <div class="stat-card success"><div class="stat-row"><div><div class="stat-value" id="s2">0</div><div class="stat-label">Checked In</div></div><div class="stat-icon">✅</div></div></div>
+        <div class="stat-card warning"><div class="stat-row"><div><div class="stat-value" id="s3">0</div><div class="stat-label">Check-outs Today</div></div><div class="stat-icon">🚪</div></div></div>
+        <div class="stat-card info"><div class="stat-row"><div><div class="stat-value" id="s4">0</div><div class="stat-label">Rooms Occupied</div></div><div class="stat-icon">🏨</div></div></div>
+        <div class="stat-card secondary"><div class="stat-row"><div><div class="stat-value" id="s5">0</div><div class="stat-label">Free Rooms</div></div><div class="stat-icon">🟢</div></div></div>
+        <div class="stat-card danger"><div class="stat-row"><div><div class="stat-value" id="s6">0</div><div class="stat-label">Pending Issues</div></div><div class="stat-icon">⚠</div></div></div>
+      </div>
+
+      <div class="grid-2 mb-4">
+
+        <!-- Room Status Grid -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🏨 Room Occupancy Map</h3>
+            <div class="card-actions">
+              <span style="font-size:11px;color:var(--text-muted);">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(16,185,129,0.4);margin-right:4px;"></span>Free
+                <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(99,102,241,0.4);margin-left:8px;margin-right:4px;"></span>Occupied
+                <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(245,158,11,0.4);margin-left:8px;margin-right:4px;"></span>Checkout
+                <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(6,182,212,0.4);margin-left:8px;margin-right:4px;"></span>Cleaning
+              </span>
+            </div>
+          </div>
+
+          <!-- Floor 1 -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;">FLOOR 1</div>
+            <div class="room-grid" id="floor1Grid"></div>
+          </div>
+          <!-- Floor 2 -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;">FLOOR 2</div>
+            <div class="room-grid" id="floor2Grid"></div>
+          </div>
+          <!-- Floor 3 -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:0.06em;">FLOOR 3</div>
+            <div class="room-grid" id="floor3Grid"></div>
+          </div>
+        </div>
+
+        <!-- Right column: Staff + Approvals -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Staff on Duty -->
+          <div class="card" style="flex:1;">
+            <div class="card-header">
+              <h3>👷 Staff on Duty</h3>
+              <span class="header-chip" style="font-size:11px;">Shift: Morning</span>
+            </div>
+            <div id="staffList"></div>
+          </div>
+
+          <!-- Pending Approvals -->
+          <div class="card" style="flex:1;">
+            <div class="card-header">
+              <h3>📋 Pending Approvals</h3>
+              <span id="approvalBadge" class="badge alert hidden">0</span>
+            </div>
+            <div id="approvalList">
+              <div class="approval-item">
+                <div class="ai-icon">🛏</div>
+                <div class="ai-text">
+                  <div class="ai-title">Late Checkout — Room 204</div>
+                  <div class="ai-sub">Guest: John Smith · Requested until 3 PM</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-success btn-xs" onclick="approve(this,'Late checkout approved')">✓</button>
+                  <button class="btn btn-danger btn-xs"  onclick="deny(this,'Late checkout denied')">✗</button>
+                </div>
+              </div>
+              <div class="approval-item">
+                <div class="ai-icon">🍽</div>
+                <div class="ai-text">
+                  <div class="ai-title">Special Dietary Request — Room 312</div>
+                  <div class="ai-sub">Vegan meal for dinner · Allergies noted</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-success btn-xs" onclick="approve(this,'Dietary request sent to kitchen')">✓</button>
+                  <button class="btn btn-danger btn-xs"  onclick="deny(this,'Dietary request declined')">✗</button>
+                </div>
+              </div>
+              <div class="approval-item">
+                <div class="ai-icon">🔧</div>
+                <div class="ai-text">
+                  <div class="ai-title">Maintenance Request — Room 108</div>
+                  <div class="ai-sub">AC not cooling · Urgent</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-success btn-xs" onclick="approve(this,'Maintenance dispatched')">✓</button>
+                  <button class="btn btn-danger btn-xs"  onclick="deny(this,'Request deferred')">✗</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <h3>⏱ Today's Activity Log</h3>
+          <button class="btn btn-outline btn-sm" onclick="loadActivity()">⟳ Refresh</button>
+        </div>
+        <div class="timeline" id="activityTimeline" style="max-height:300px;overflow-y:auto;">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+const STAFF_DATA = [
+  { name:'Priya Sharma',   dept:'Front Office',   shift:'08:00–16:00', role:'FRONT_OFFICE' },
+  { name:'Rahul Verma',    dept:'Front Office',   shift:'16:00–00:00', role:'FRONT_OFFICE' },
+  { name:'Anita Desai',    dept:'Room Service',   shift:'06:00–14:00', role:'ROOM_SERVICE' },
+  { name:'Suresh Nair',    dept:'Housekeeping',   shift:'08:00–16:00', role:'ROOM_SERVICE' },
+  { name:'Ravi Krishnan',  dept:'Kitchen',        shift:'06:00–14:00', role:'CHEF' },
+  { name:'Meena Pillai',   dept:'Restaurant',     shift:'10:00–22:00', role:'CHEF' },
+];
+
+// Room data simulation
+const ROOM_STATUSES = ['available','occupied','occupied','checkout','cleaning','occupied','available','maintenance','occupied','available'];
+
+function buildRoomGrid(containerId, floor, start, count) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const statuses = ['available','occupied','occupied','checkout','cleaning','occupied','available','maintenance','occupied','available','occupied','occupied','available'];
+  el.innerHTML = Array.from({ length: count }, (_, i) => {
+    const num = start + i;
+    const s = statuses[(i + floor * 3) % statuses.length];
+    const statusLabels = { available:'Free', occupied:'Occ', checkout:'CO', cleaning:'Clean', maintenance:'Maint' };
+    return `<div class="room-tile ${s}" title="Room ${num} - ${s}"><div class="rt-num">${num}</div><div class="rt-status">${statusLabels[s]||s}</div></div>`;
+  }).join('');
+}
+
+function renderStaff() {
+  const el = document.getElementById('staffList');
+  el.innerHTML = STAFF_DATA.map(s => {
+    const colors = { FRONT_OFFICE:'#f59e0b', ROOM_SERVICE:'#10b981', CHEF:'#a855f7' };
+    const c = colors[s.role] || '#6366f1';
+    return `<div class="shift-card">
+      <div class="shift-avatar" style="background:${c};">${initials(s.name)}</div>
+      <div class="shift-info">
+        <div class="shift-name">${s.name}</div>
+        <div class="shift-dept">${s.dept}</div>
+      </div>
+      <div class="shift-time">${s.shift}</div>
+      <span class="badge at-gate" style="font-size:10px;">On Duty</span>
+    </div>`;
+  }).join('');
+}
+
+async function loadDashboard() {
+  const r = await API.get('/api/admin/dashboard-stats');
+  if (!r.success || !r.data) return;
+  const d = r.data;
+  document.getElementById('s1').textContent = d.totalVisitorsToday || 0;
+  document.getElementById('s2').textContent = d.activeVisitors || 0;
+  document.getElementById('s3').textContent = d.inMeetings || 0;
+  document.getElementById('s4').textContent = d.occupiedRooms || 0;
+  document.getElementById('s5').textContent = d.availableRooms || 0;
+  document.getElementById('s6').textContent = d.totalAlerts || 0;
+}
+
+async function loadActivity() {
+  const r = await API.get('/api/admin/audit-logs');
+  const tl = document.getElementById('activityTimeline');
+  if (!r.success || !r.data?.length) { tl.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>No activity yet today</p></div>'; return; }
+  tl.innerHTML = r.data.slice(0, 20).map(l => `
+    <div class="timeline-item">
+      <div class="ti-time">${l.timestamp ? fmtTime(l.timestamp) : '—'}</div>
+      <div class="ti-event">${l.eventType}</div>
+      <div class="ti-desc">${l.description || '—'}</div>
+      <div class="ti-by">By: ${l.performedBy || 'System'}</div>
+    </div>`).join('');
+}
+
+function approve(btn, msg) {
+  btn.closest('.approval-item').style.opacity = '0.4';
+  btn.closest('.approval-item').style.pointerEvents = 'none';
+  Toast.success(msg);
+}
+function deny(btn, msg) {
+  btn.closest('.approval-item').style.opacity = '0.4';
+  btn.closest('.approval-item').style.pointerEvents = 'none';
+  Toast.warning(msg);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  buildRoomGrid('floor1Grid', 1, 101, 12);
+  buildRoomGrid('floor2Grid', 2, 201, 12);
+  buildRoomGrid('floor3Grid', 3, 301, 12);
+  renderStaff();
+  loadDashboard();
+  loadActivity();
+  setInterval(loadDashboard, 12000);
+});
+</script>
+</body>
+</html>
