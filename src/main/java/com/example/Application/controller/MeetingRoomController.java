@@ -70,4 +70,50 @@ public class MeetingRoomController {
         return ResponseEntity.ok(ApiResponseDTO.success("Active meetings",
                 meetingRoomService.getActiveMeetings()));
     }
+
+    @PostMapping
+    public ResponseEntity<?> createRoom(@RequestBody Map<String, Object> body) {
+        try {
+            String roomCode   = (String) body.get("roomCode");
+            String roomName   = (String) body.get("roomName");
+            String floor      = (String) body.getOrDefault("floor", "1");
+            int    capacity   = body.get("capacity") != null ? Integer.parseInt(body.get("capacity").toString()) : 2;
+            String facilities = (String) body.getOrDefault("facilities", "");
+            String locationX  = (String) body.getOrDefault("locationX", "0");
+            String locationY  = (String) body.getOrDefault("locationY", "0");
+            if (roomCode == null || roomName == null) {
+                return ResponseEntity.badRequest().body(ApiResponseDTO.error("roomCode and roomName are required"));
+            }
+            var room = meetingRoomService.createRoom(roomCode, roomName, floor, capacity, facilities, locationX, locationY);
+            return ResponseEntity.ok(ApiResponseDTO.success("Room created", room));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateRoom(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        try {
+            String roomName   = (String) body.get("roomName");
+            String floor      = (String) body.get("floor");
+            int    capacity   = body.get("capacity") != null ? Integer.parseInt(body.get("capacity").toString()) : 0;
+            String facilities = (String) body.get("facilities");
+            String locationX  = (String) body.get("locationX");
+            String locationY  = (String) body.get("locationY");
+            var room = meetingRoomService.updateRoom(id, roomName, floor, capacity, facilities, locationX, locationY);
+            return ResponseEntity.ok(ApiResponseDTO.success("Room updated", room));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRoom(@PathVariable Long id) {
+        try {
+            meetingRoomService.deleteRoom(id);
+            return ResponseEntity.ok(ApiResponseDTO.success("Room deleted", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponseDTO.error(e.getMessage()));
+        }
+    }
 }

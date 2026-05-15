@@ -20,8 +20,6 @@ public class AnalyticsService {
     @Autowired private MeetingRepository meetingRepository;
     @Autowired private LocationEventRepository locationEventRepository;
     @Autowired private NotificationRepository notificationRepository;
-    @Autowired private GateLogRepository gateLogRepository;
-
     public DashboardStatsDTO getDashboardStats() {
         LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
 

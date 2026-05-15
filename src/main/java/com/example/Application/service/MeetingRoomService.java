@@ -106,6 +106,49 @@ public class MeetingRoomService {
         return meetingRepository.findByVisitorId(visitorId);
     }
 
+    public MeetingRoom createRoom(String roomCode, String roomName, String floor,
+                                   int capacity, String facilities,
+                                   String locationX, String locationY) {
+        if (meetingRoomRepository.findByRoomCode(roomCode).isPresent()) {
+            throw new RuntimeException("Room code already exists: " + roomCode);
+        }
+        MeetingRoom room = MeetingRoom.builder()
+                .roomCode(roomCode).roomName(roomName).floor(floor)
+                .capacity(capacity).status(RoomStatus.AVAILABLE)
+                .facilities(facilities)
+                .locationX(locationX).locationY(locationY)
+                .currentOccupancy(0).build();
+        MeetingRoom saved = meetingRoomRepository.save(room);
+        broadcastRoomUpdate();
+        return saved;
+    }
+
+    public MeetingRoom updateRoom(Long id, String roomName, String floor,
+                                   int capacity, String facilities,
+                                   String locationX, String locationY) {
+        MeetingRoom room = meetingRoomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        if (roomName  != null) room.setRoomName(roomName);
+        if (floor     != null) room.setFloor(floor);
+        if (capacity  > 0)     room.setCapacity(capacity);
+        if (facilities != null) room.setFacilities(facilities);
+        if (locationX != null) room.setLocationX(locationX);
+        if (locationY != null) room.setLocationY(locationY);
+        MeetingRoom saved = meetingRoomRepository.save(room);
+        broadcastRoomUpdate();
+        return saved;
+    }
+
+    public void deleteRoom(Long id) {
+        MeetingRoom room = meetingRoomRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Room not found: " + id));
+        if (room.getStatus() == RoomStatus.OCCUPIED) {
+            throw new RuntimeException("Cannot delete an occupied room");
+        }
+        meetingRoomRepository.deleteById(id);
+        broadcastRoomUpdate();
+    }
+
     private void broadcastRoomUpdate() {
         Map<String, Object> payload = new HashMap<>();
         payload.put("type", "ROOM_UPDATE");

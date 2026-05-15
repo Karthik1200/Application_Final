@@ -92,6 +92,8 @@
           <button class="tab-btn" data-tab="tabGate">🚧 Gate Logs</button>
           <button class="tab-btn" data-tab="tabAudit">🔍 Audit Trail</button>
           <button class="tab-btn" data-tab="tabBlacklist">⛔ Blacklist</button>
+          <button class="tab-btn" data-tab="tabUsers">👤 Users</button>
+          <button class="tab-btn" data-tab="tabRooms">🚪 Rooms</button>
           <button class="tab-btn" data-tab="tabExport">💾 Export</button>
         </div>
       </div>
@@ -224,6 +226,47 @@
         </div>
       </div>
 
+      <!-- Tab: Users -->
+      <div class="tab-panel" id="tabUsers">
+        <div class="card">
+          <div class="card-header">
+            <h3>👤 Staff Users</h3>
+            <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Add User</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Rooms -->
+      <div class="tab-panel" id="tabRooms">
+        <div class="card">
+          <div class="card-header">
+            <h3>🚪 Meeting Rooms</h3>
+            <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add Room</button>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr><th>Code</th><th>Name</th><th>Floor</th><th>Capacity</th><th>Facilities</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="roomsBody">
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: Export -->
       <div class="tab-panel" id="tabExport">
         <div class="grid-3">
           <div class="card">
@@ -259,6 +302,102 @@
   </main>
 </div>
 
+<!-- User Modal -->
+<div id="userModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="userModalTitle">👤 Add Staff User</h3>
+      <button class="modal-close" onclick="closeUserModal()">×</button>
+    </div>
+    <div id="userError" class="info-box danger hidden mb-3"></div>
+    <input type="hidden" id="editUserId">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="uFullName" class="form-control" placeholder="John Doe">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username *</label>
+        <input type="text" id="uUsername" class="form-control" placeholder="johndoe">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" id="uEmail" class="form-control" placeholder="john@vrgt.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password <span id="uPwdNote" style="font-size:10px;color:var(--text-muted);">*</span></label>
+        <input type="password" id="uPassword" class="form-control" placeholder="Min 6 characters">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Role *</label>
+        <select id="uRole" class="form-control">
+          <option value="ADMIN">Admin</option>
+          <option value="SECURITY_GUARD">Security Guard</option>
+          <option value="RECEPTIONIST">Receptionist</option>
+          <option value="HOST" selected>Host</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <input type="text" id="uDept" class="form-control" placeholder="e.g. Engineering">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone</label>
+      <input type="tel" id="uPhone" class="form-control" placeholder="9876543210">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeUserModal()">Cancel</button>
+      <button class="btn btn-primary" id="uSaveBtn" onclick="saveUser()">💾 Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Room Modal -->
+<div id="roomModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="roomModalTitle">🚪 Add Meeting Room</h3>
+      <button class="modal-close" onclick="closeRoomModal()">×</button>
+    </div>
+    <div id="roomError" class="info-box danger hidden mb-3"></div>
+    <input type="hidden" id="editRoomId">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Room Code *</label>
+        <input type="text" id="rCode" class="form-control" placeholder="e.g. MR-101">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room Name *</label>
+        <input type="text" id="rName" class="form-control" placeholder="e.g. Conference Room A">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Floor *</label>
+        <input type="text" id="rFloor" class="form-control" placeholder="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacity *</label>
+        <input type="number" id="rCapacity" class="form-control" placeholder="6" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Facilities</label>
+      <input type="text" id="rFacilities" class="form-control" placeholder="Projector, Whiteboard, Video Conferencing">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeRoomModal()">Cancel</button>
+      <button class="btn btn-primary" id="rSaveBtn" onclick="saveRoom()">💾 Save Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- Blacklist Modal -->
 <div id="blacklistModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-header">
@@ -312,6 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tab === 'tabGate')      loadGateData();
       if (tab === 'tabAudit')     loadAuditData();
       if (tab === 'tabBlacklist') loadBlacklist();
+      if (tab === 'tabUsers')     loadUsers();
+      if (tab === 'tabRooms')     loadRooms();
     });
   });
 
@@ -506,6 +647,205 @@ async function removeBlacklist(id) {
 function exportFile(url, filename) {
   Toast.info('Generating ' + filename + '…');
   API.download(url, filename);
+}
+
+// ── Users tab ──────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const r = await API.get('/api/admin/users');
+  const tbody = document.getElementById('usersBody');
+  if (!r.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No users found</td></tr>'; return;
+  }
+  const roleLabel = { ADMIN:'Admin', SECURITY_GUARD:'Guard', RECEPTIONIST:'Reception', HOST:'Host' };
+  tbody.innerHTML = r.data.map(u => `
+    <tr style="${!u.active ? 'opacity:0.5;' : ''}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:${avatarColor(u.fullName)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;">${initials(u.fullName)}</div>
+          <strong style="font-size:13px;">${u.fullName}</strong>
+        </div>
+      </td>
+      <td class="mono text-sm">${u.username}</td>
+      <td class="td-muted">${u.email}</td>
+      <td><span class="badge pre-registered">${roleLabel[u.role] || u.role}</span></td>
+      <td class="td-muted">${u.department || '—'}</td>
+      <td>${u.active ? '<span class="badge at-gate">Active</span>' : '<span class="badge checked-out">Inactive</span>'}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="openEditUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">Edit</button>
+        ${u.active ? `<button class="btn btn-ghost btn-sm text-danger" onclick="deactivateUser(${u.id},'${u.username}')">Deactivate</button>` : `<button class="btn btn-ghost btn-sm text-success" onclick="activateUser(${u.id})">Activate</button>`}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openUserModal() {
+  document.getElementById('userModalTitle').textContent = '👤 Add Staff User';
+  document.getElementById('editUserId').value = '';
+  ['uFullName','uUsername','uEmail','uPassword','uPhone','uDept'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('uRole').value = 'HOST';
+  document.getElementById('uUsername').disabled = false;
+  document.getElementById('uPwdNote').textContent = '*';
+  document.getElementById('userError').classList.add('hidden');
+  document.getElementById('userModal').classList.remove('hidden');
+}
+
+function openEditUser(u) {
+  document.getElementById('userModalTitle').textContent = '✏ Edit User';
+  document.getElementById('editUserId').value   = u.id;
+  document.getElementById('uFullName').value    = u.fullName || '';
+  document.getElementById('uUsername').value    = u.username || '';
+  document.getElementById('uUsername').disabled = true;
+  document.getElementById('uEmail').value       = u.email || '';
+  document.getElementById('uPassword').value    = '';
+  document.getElementById('uPwdNote').textContent = '(leave blank to keep)';
+  document.getElementById('uRole').value        = u.role || 'HOST';
+  document.getElementById('uDept').value        = u.department || '';
+  document.getElementById('uPhone').value       = u.phone || '';
+  document.getElementById('userError').classList.add('hidden');
+  document.getElementById('userModal').classList.remove('hidden');
+}
+
+function closeUserModal() { document.getElementById('userModal').classList.add('hidden'); }
+
+async function saveUser() {
+  const editId = document.getElementById('editUserId').value;
+  const isEdit = !!editId;
+  const errEl  = document.getElementById('userError');
+  errEl.classList.add('hidden');
+
+  const body = {
+    fullName:   document.getElementById('uFullName').value.trim(),
+    username:   document.getElementById('uUsername').value.trim(),
+    email:      document.getElementById('uEmail').value.trim(),
+    password:   document.getElementById('uPassword').value,
+    role:       document.getElementById('uRole').value,
+    department: document.getElementById('uDept').value.trim(),
+    phone:      document.getElementById('uPhone').value.trim(),
+  };
+  if (!body.fullName || !body.email || (!isEdit && (!body.username || !body.password))) {
+    errEl.innerHTML = 'Full name, email' + (!isEdit ? ', username and password' : '') + ' are required';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  const btn = document.getElementById('uSaveBtn');
+  setLoading(btn, 'Saving…');
+  const r = isEdit
+    ? await API.put('/api/admin/users/' + editId, body)
+    : await API.post('/api/admin/users', body);
+  clearLoading(btn);
+
+  if (r.success) {
+    Toast.success(isEdit ? 'User updated' : 'User created');
+    closeUserModal();
+    loadUsers();
+  } else {
+    errEl.innerHTML = r.message || 'Failed to save';
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function deactivateUser(id, username) {
+  if (!await confirm2('Deactivate user "' + username + '"? They will not be able to log in.')) return;
+  const r = await API.del('/api/admin/users/' + id);
+  if (r.success) { Toast.success('User deactivated'); loadUsers(); }
+  else Toast.error(r.message);
+}
+
+async function activateUser(id) {
+  const r = await API.put('/api/admin/users/' + id, { active: 'true' });
+  if (r.success) { Toast.success('User activated'); loadUsers(); }
+  else Toast.error(r.message);
+}
+
+// ── Rooms tab ──────────────────────────────────────────────────────────────
+async function loadRooms() {
+  const r = await API.get('/api/rooms');
+  const tbody = document.getElementById('roomsBody');
+  if (!r.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:24px;">No rooms configured. Click "+ Add Room" to create one.</td></tr>'; return;
+  }
+  tbody.innerHTML = r.data.map(rm => `
+    <tr>
+      <td class="mono text-sm"><strong>${rm.roomCode}</strong></td>
+      <td>${rm.roomName}</td>
+      <td>Floor ${rm.floor}</td>
+      <td>${rm.capacity}</td>
+      <td class="td-muted" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">${rm.facilities || '—'}</td>
+      <td>${getStatusBadge(rm.status)}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="openEditRoom(${JSON.stringify(rm).replace(/"/g,'&quot;')})">Edit</button>
+        ${rm.status !== 'OCCUPIED' ? `<button class="btn btn-ghost btn-sm text-danger" onclick="deleteRoom(${rm.id},'${rm.roomCode}')">Delete</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openRoomModal() {
+  document.getElementById('roomModalTitle').textContent = '🚪 Add Meeting Room';
+  document.getElementById('editRoomId').value = '';
+  ['rCode','rName','rFloor','rCapacity','rFacilities'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('rCode').disabled = false;
+  document.getElementById('roomError').classList.add('hidden');
+  document.getElementById('roomModal').classList.remove('hidden');
+}
+
+function openEditRoom(rm) {
+  document.getElementById('roomModalTitle').textContent = '✏ Edit Room';
+  document.getElementById('editRoomId').value   = rm.id;
+  document.getElementById('rCode').value        = rm.roomCode;
+  document.getElementById('rCode').disabled     = true;
+  document.getElementById('rName').value        = rm.roomName;
+  document.getElementById('rFloor').value       = rm.floor;
+  document.getElementById('rCapacity').value    = rm.capacity;
+  document.getElementById('rFacilities').value  = rm.facilities || '';
+  document.getElementById('roomError').classList.add('hidden');
+  document.getElementById('roomModal').classList.remove('hidden');
+}
+
+function closeRoomModal() { document.getElementById('roomModal').classList.add('hidden'); }
+
+async function saveRoom() {
+  const editId = document.getElementById('editRoomId').value;
+  const isEdit = !!editId;
+  const errEl  = document.getElementById('roomError');
+  errEl.classList.add('hidden');
+
+  const body = {
+    roomCode:   document.getElementById('rCode').value.trim().toUpperCase(),
+    roomName:   document.getElementById('rName').value.trim(),
+    floor:      document.getElementById('rFloor').value.trim(),
+    capacity:   parseInt(document.getElementById('rCapacity').value) || 0,
+    facilities: document.getElementById('rFacilities').value.trim(),
+  };
+  if (!body.roomName || body.capacity < 1 || !body.floor) {
+    errEl.innerHTML = 'Room name, floor and capacity are required'; errEl.classList.remove('hidden'); return;
+  }
+  if (!isEdit && !body.roomCode) {
+    errEl.innerHTML = 'Room code is required'; errEl.classList.remove('hidden'); return;
+  }
+
+  const btn = document.getElementById('rSaveBtn');
+  setLoading(btn, 'Saving…');
+  const r = isEdit
+    ? await API.put('/api/rooms/' + editId, body)
+    : await API.post('/api/rooms', body);
+  clearLoading(btn);
+
+  if (r.success) {
+    Toast.success(isEdit ? 'Room updated' : 'Room created');
+    closeRoomModal();
+    loadRooms();
+  } else {
+    errEl.innerHTML = r.message || 'Failed to save';
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function deleteRoom(id, code) {
+  if (!await confirm2('Delete room "' + code + '"? This cannot be undone.')) return;
+  const r = await API.del('/api/rooms/' + id);
+  if (r.success) { Toast.success('Room deleted'); loadRooms(); }
+  else Toast.error(r.message);
 }
 </script>
 </body>

@@ -18,7 +18,6 @@ public class VisitorService {
     @Autowired private BlacklistRepository blacklistRepository;
     @Autowired private QRCodeService qrCodeService;
     @Autowired private AuditService auditService;
-    @Autowired private NotificationService notificationService;
     @Autowired private Msg91Service msg91Service;
 
     public Visitor register(VisitorRegistrationDTO dto) {
