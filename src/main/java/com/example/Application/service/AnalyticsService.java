@@ -41,7 +41,6 @@ public class AnalyticsService {
 
         long totalAlerts = notificationRepository.findTop50ByOrderByCreatedAtDesc().size();
 
-        // Location heatmap
         List<Object[]> heatmapRaw = locationEventRepository.findLocationHeatmap(today);
         List<Map<String, Object>> heatmap = heatmapRaw.stream().map(row -> {
             Map<String, Object> entry = new HashMap<>();
@@ -50,7 +49,6 @@ public class AnalyticsService {
             return entry;
         }).collect(Collectors.toList());
 
-        // Recent activity
         List<Map<String, Object>> recentActivity = new ArrayList<>();
         active.stream().limit(10).forEach(v -> {
             Map<String, Object> activity = new HashMap<>();

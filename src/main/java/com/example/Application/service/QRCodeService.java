@@ -24,9 +24,7 @@ public class QRCodeService {
     @Value("${app.qr.aes-key}")
     private String aesKey;
 
-    /**
-     * Encrypt data using AES-256
-     */
+    
     public String encrypt(String data) {
         try {
             byte[] key = Arrays.copyOf(
@@ -42,9 +40,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Decrypt AES-256 encrypted data
-     */
+    
     public String decrypt(String encryptedData) {
         try {
             byte[] key = Arrays.copyOf(
@@ -60,9 +56,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Generate QR code image as Base64 string
-     */
+    
     public String generateQRCodeBase64(String data, int width, int height) {
         try {
             QRCodeWriter qrCodeWriter = new QRCodeWriter();
@@ -81,9 +75,7 @@ public class QRCodeService {
         }
     }
 
-    /**
-     * Create encrypted QR pass for visitor
-     */
+    
     public Map<String, String> createVisitorQRPass(Long visitorId, String visitorName, String purpose, long expiryTimestamp) {
         String qrData = String.format("VRGT|%d|%s|%s|%d", visitorId, visitorName, purpose, expiryTimestamp);
         String encryptedData = encrypt(qrData);
@@ -95,9 +87,7 @@ public class QRCodeService {
         return result;
     }
 
-    /**
-     * Validate QR pass
-     */
+    
     public Map<String, Object> validateQRPass(String encryptedData) {
         Map<String, Object> result = new HashMap<>();
         try {

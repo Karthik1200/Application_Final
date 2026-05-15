@@ -47,7 +47,6 @@
     </header>
 
     <div class="page-content">
-      <!-- KPIs -->
       <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
         <div class="stat-card primary">
           <div class="stat-row">
@@ -81,9 +80,7 @@
         </div>
       </div>
 
-      <!-- Map + Sidebar -->
       <div class="grid-3-1 mb-4">
-        <!-- Live Floor Map -->
         <div class="map-container">
           <div class="map-toolbar">
             <span style="font-size:13px;font-weight:600;color:var(--text-secondary);">🗺 Live Floor Map</span>
@@ -95,28 +92,22 @@
 
           <div class="map-svg-wrapper">
             <svg viewBox="0 0 900 580" id="floorSvg">
-              <!-- Building outline -->
               <rect x="20" y="20" width="860" height="540" rx="10" fill="none" stroke="rgba(99,102,241,0.15)" stroke-width="1.5"/>
 
-              <!-- Gate -->
               <rect x="30" y="260" width="110" height="100" rx="8" fill="rgba(59,130,246,0.07)" stroke="rgba(59,130,246,0.3)" stroke-width="1.5"/>
               <text x="85" y="300" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">GATE</text>
               <text x="85" y="318" text-anchor="middle" fill="#475569" font-size="9">Entry Point</text>
 
-              <!-- Lobby -->
               <rect x="160" y="230" width="130" height="130" rx="8" fill="rgba(168,85,247,0.06)" stroke="rgba(168,85,247,0.2)" stroke-width="1"/>
               <text x="225" y="298" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="600">LOBBY</text>
 
-              <!-- Reception -->
               <rect x="310" y="210" width="150" height="110" rx="8" fill="rgba(245,158,11,0.07)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
               <text x="385" y="255" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">RECEPTION</text>
               <text x="385" y="273" text-anchor="middle" fill="#475569" font-size="9">Check-in Desk</text>
 
-              <!-- Corridor -->
               <rect x="480" y="120" width="28" height="340" rx="4" fill="rgba(99,102,241,0.03)" stroke="rgba(99,102,241,0.12)" stroke-dasharray="4 3" stroke-width="1"/>
               <text x="494" y="295" text-anchor="middle" fill="#6366f1" font-size="8" transform="rotate(-90,494,295)">CORRIDOR A</text>
 
-              <!-- Meeting Rooms Floor 1 -->
               <rect x="530" y="60" width="150" height="100" rx="8" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
               <text x="605" y="100" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">MR-101</text>
               <text x="605" y="118" text-anchor="middle" fill="#475569" font-size="9">Lotus Room</text>
@@ -129,7 +120,6 @@
               <text x="605" y="340" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">MR-103</text>
               <text x="605" y="358" text-anchor="middle" fill="#475569" font-size="9">Jasmine Room</text>
 
-              <!-- Meeting Rooms Floor 2 -->
               <rect x="710" y="60" width="150" height="100" rx="8" fill="rgba(6,182,212,0.07)" stroke="rgba(6,182,212,0.25)" stroke-width="1.5"/>
               <text x="785" y="100" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">MR-201</text>
               <text x="785" y="118" text-anchor="middle" fill="#475569" font-size="9">Tulip Room</text>
@@ -138,16 +128,13 @@
               <text x="785" y="220" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">MR-202</text>
               <text x="785" y="238" text-anchor="middle" fill="#475569" font-size="9">Iris Room</text>
 
-              <!-- Cafeteria -->
               <rect x="310" y="400" width="150" height="110" rx="8" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.18)" stroke-width="1"/>
               <text x="385" y="458" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">☕ Cafeteria</text>
 
-              <!-- Restricted Zone -->
               <rect x="710" y="390" width="150" height="110" rx="8" fill="rgba(239,68,68,0.05)" stroke="rgba(239,68,68,0.4)" stroke-width="1.5" stroke-dasharray="6 3"/>
               <text x="785" y="435" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">⚠ RESTRICTED</text>
               <text x="785" y="453" text-anchor="middle" fill="#ef4444" font-size="9">Server Room</text>
 
-              <!-- Visitor markers (dynamic) -->
               <g id="visitorDots"></g>
             </svg>
           </div>
@@ -162,7 +149,6 @@
           </div>
         </div>
 
-        <!-- Active Visitors Sidebar -->
         <div class="card" style="display:flex;flex-direction:column;">
           <div class="card-header">
             <h3>👥 Visitors</h3>
@@ -174,7 +160,6 @@
         </div>
       </div>
 
-      <!-- Visitor Details Table -->
       <div class="card">
         <div class="card-header">
           <h3>📊 Visitor Status Board</h3>
@@ -239,14 +224,12 @@ async function loadTracking() {
   _trackData = r.data;
   const visitors = _trackData;
 
-  // Update stats
   document.getElementById('totalActive').textContent  = visitors.length;
   document.getElementById('atGate').textContent       = visitors.filter(v => v.status === 'CHECKED_IN_GATE').length;
   document.getElementById('atReception').textContent  = visitors.filter(v => ['AT_RECEPTION','HOST_CONFIRMED'].includes(v.status)).length;
   document.getElementById('inMeeting').textContent    = visitors.filter(v => v.status === 'IN_MEETING').length;
   document.getElementById('alertCount').textContent   = visitors.filter(v => v.restricted).length;
 
-  // Update map dots
   const g = document.getElementById('visitorDots');
   g.innerHTML = visitors.map((v, i) => {
     const pos   = _posMap[v.status] || { x: 200, y: 300 };
@@ -261,7 +244,6 @@ async function loadTracking() {
       </g>`;
   }).join('');
 
-  // Update sidebar
   const sidebar = document.getElementById('visitorSidebar');
   if (!visitors.length) {
     sidebar.innerHTML = '<div class="empty-state"><div class="empty-icon">🏢</div><h3>No active visitors</h3></div>';

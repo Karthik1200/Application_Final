@@ -14,10 +14,10 @@ public class AuditLog {
     private Long id;
 
     @Column(nullable = false)
-    private String eventType; // REGISTRATION, GATE_ENTRY, QR_SCAN, ROOM_ASSIGN, CHECKOUT, etc.
+    private String eventType; 
 
     @Column(nullable = false)
-    private String entityType; // VISITOR, MEETING, ROOM, USER
+    private String entityType; 
 
     private Long entityId;
 

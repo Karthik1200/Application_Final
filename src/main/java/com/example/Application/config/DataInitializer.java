@@ -21,7 +21,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Create default users
         if (appUserRepository.count() == 0) {
             appUserRepository.save(AppUser.builder()
                     .username("admin").password(passwordEncoder.encode("admin123"))
@@ -54,7 +53,6 @@ public class DataInitializer implements CommandLineRunner {
                     .phone("9876543215").department("HR").role(UserRole.HOST).active(true).build());
         }
 
-        // Create meeting rooms
         if (meetingRoomRepository.count() == 0) {
             String[][] rooms = {
                 {"MR-101", "Lotus", "1", "6", "350", "180"},
@@ -78,7 +76,6 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        // Add sample visitors for demo
         if (visitorRepository.count() == 0) {
             visitorRepository.save(Visitor.builder()
                     .fullName("Rahul Mehta").email("rahul@techcorp.com").phone("9988776655")
@@ -105,7 +102,6 @@ public class DataInitializer implements CommandLineRunner {
                     .build());
         }
 
-        // Add blacklist entry
         if (blacklistRepository.count() == 0) {
             blacklistRepository.save(BlacklistEntry.builder()
                     .fullName("John Banned").email("banned@test.com").phone("0000000000")

@@ -28,12 +28,7 @@ public class Msg91Service {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper       = new ObjectMapper();
 
-    // ── Public entry point ────────────────────────────────────────────────────
-
-    /**
-     * Sends OTP via every channel listed in otpChannels (comma-separated: sms,whatsapp,email).
-     * Each channel is attempted independently; failures are logged but don't abort others.
-     */
+    
     public OtpResult sendOtp(String phone, String email, String visitorName, String otp, String otpChannels) {
         List<String> sent   = new ArrayList<>();
         List<String> failed = new ArrayList<>();
@@ -56,7 +51,6 @@ public class Msg91Service {
         return new OtpResult(sent, failed);
     }
 
-    // ── SMS OTP ───────────────────────────────────────────────────────────────
 
     private boolean sendSmsOtp(String phone, String otp, String visitorName) {
         String mobile = sanitizeMobile(phone);
@@ -86,7 +80,6 @@ public class Msg91Service {
         }
     }
 
-    // ── WhatsApp OTP ──────────────────────────────────────────────────────────
 
     private boolean sendWhatsappOtp(String phone, String otp, String visitorName) {
         String mobile = sanitizeMobile(phone);
@@ -135,7 +128,6 @@ public class Msg91Service {
         }
     }
 
-    // ── Email OTP ─────────────────────────────────────────────────────────────
 
     private boolean sendEmailOtp(String toEmail, String otp, String visitorName) {
         if (isBlank(toEmail)) {
@@ -171,7 +163,6 @@ public class Msg91Service {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private ResponseEntity<String> post(String url, Object body) throws Exception {
         HttpHeaders headers = new HttpHeaders();
@@ -181,7 +172,6 @@ public class Msg91Service {
         return restTemplate.postForEntity(url, new HttpEntity<>(json, headers), String.class);
     }
 
-    /** Normalises to Indian mobile format 91XXXXXXXXXX; returns null if unparseable. */
     private String sanitizeMobile(String phone) {
         if (phone == null) return null;
         String digits = phone.replaceAll("[^0-9]", "");
@@ -203,7 +193,6 @@ public class Msg91Service {
 
     private boolean isBlank(String s) { return s == null || s.isBlank(); }
 
-    // ── Result DTO ────────────────────────────────────────────────────────────
 
     public static class OtpResult {
         public final List<String> sent;

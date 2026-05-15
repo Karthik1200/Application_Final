@@ -22,7 +22,6 @@ public class VisitorService {
     @Autowired private Msg91Service msg91Service;
 
     public Visitor register(VisitorRegistrationDTO dto) {
-        // Check blacklist
         var blacklisted = blacklistRepository.findMatchingBlacklist(
                 dto.getEmail(), dto.getPhone(),
                 dto.getIdNumber() != null ? dto.getIdNumber() : "");
@@ -30,7 +29,6 @@ public class VisitorService {
             throw new RuntimeException("Visitor is blacklisted: " + blacklisted.get(0).getReason());
         }
 
-        // Check for duplicates (active visitors with same ID)
         if (dto.getIdNumber() != null && !dto.getIdNumber().isEmpty()) {
             var duplicates = visitorRepository.findByIdNumberAndStatusNot(dto.getIdNumber(), VisitorStatus.CHECKED_OUT);
             if (!duplicates.isEmpty()) {
@@ -38,7 +36,6 @@ public class VisitorService {
             }
         }
 
-        // Generate OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
 
         Visitor visitor = Visitor.builder()
@@ -65,7 +62,6 @@ public class VisitorService {
         auditService.log("REGISTRATION", "VISITOR", visitor.getId(),
                 "SYSTEM", "SYSTEM", "Visitor pre-registered: " + visitor.getFullName());
 
-        // Deliver OTP via MSG91
         String channels = dto.getOtpChannel() != null ? dto.getOtpChannel() : "sms";
         Msg91Service.OtpResult result = msg91Service.sendOtp(
                 visitor.getPhone(), visitor.getEmail(), visitor.getFullName(), otp, channels);
@@ -111,7 +107,6 @@ public class VisitorService {
         visitor.setEmailVerified(true);
         visitor.setStatus(VisitorStatus.VERIFIED);
 
-        // Generate QR pass (valid for 24 hours)
         long expiryTimestamp = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
         Map<String, String> qrPass = qrCodeService.createVisitorQRPass(
                 visitor.getId(), visitor.getFullName(), visitor.getPurpose(), expiryTimestamp);

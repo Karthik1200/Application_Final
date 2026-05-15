@@ -45,7 +45,6 @@
 
     <div class="page-content">
 
-      <!-- Route Config -->
       <div class="card mb-4">
         <div class="card-header">
           <h3>🧭 Route Configuration</h3>
@@ -77,10 +76,8 @@
         </div>
       </div>
 
-      <!-- Map + Directions -->
       <div class="grid-2-1">
 
-        <!-- Map -->
         <div class="card" style="padding:0;overflow:hidden;">
           <div class="map-toolbar">
             <span style="font-weight:600;font-size:13px;">🏢 Interactive Floor Plan</span>
@@ -111,16 +108,13 @@
                 </marker>
               </defs>
 
-              <!-- Building shell -->
               <rect x="10" y="10" width="780" height="460" rx="12"
                     fill="rgba(15,15,40,0.6)" stroke="rgba(99,102,241,0.2)" stroke-width="1.5"/>
 
-              <!-- Main corridor (horizontal) -->
               <rect x="120" y="215" width="360" height="50" rx="4"
                     fill="rgba(99,102,241,0.04)" stroke="rgba(99,102,241,0.1)" stroke-width="1"
                     stroke-dasharray="6,4"/>
 
-              <!-- Gate area -->
               <rect x="22" y="195" width="96" height="90" rx="8"
                     fill="rgba(59,130,246,0.10)" stroke="rgba(59,130,246,0.45)" stroke-width="1.5"/>
               <text x="70" y="232" text-anchor="middle" fill="#60a5fa" font-size="20">🚧</text>
@@ -128,12 +122,10 @@
               <text x="70" y="264" text-anchor="middle" fill="#64748b" font-size="8">Entry Point</text>
               <circle cx="70" cy="240" r="5" fill="#3b82f6" id="gatePoint"/>
 
-              <!-- Lobby -->
               <rect x="128" y="160" width="100" height="160" rx="8"
                     fill="rgba(100,116,139,0.07)" stroke="rgba(100,116,139,0.25)" stroke-width="1"/>
               <text x="178" y="240" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">LOBBY</text>
 
-              <!-- Reception -->
               <rect x="245" y="170" width="130" height="120" rx="8"
                     fill="rgba(245,158,11,0.10)" stroke="rgba(245,158,11,0.45)" stroke-width="1.5"/>
               <text x="310" y="214" text-anchor="middle" fill="#fbbf24" font-size="20">🛎</text>
@@ -141,19 +133,15 @@
               <text x="310" y="248" text-anchor="middle" fill="#64748b" font-size="8">Check-in Desk</text>
               <circle cx="310" cy="230" r="5" fill="#f59e0b" id="receptionPoint"/>
 
-              <!-- Vertical corridor to rooms -->
               <rect x="472" y="30" width="46" height="420" rx="4"
                     fill="rgba(99,102,241,0.03)" stroke="rgba(99,102,241,0.08)" stroke-width="1"
                     stroke-dasharray="6,4"/>
 
-              <!-- Elevator / Stairs -->
               <rect x="404" y="210" width="58" height="60" rx="6"
                     fill="rgba(168,85,247,0.10)" stroke="rgba(168,85,247,0.35)" stroke-width="1.5"/>
               <text x="433" y="242" text-anchor="middle" fill="#c084fc" font-size="20">🛗</text>
               <text x="433" y="258" text-anchor="middle" fill="#94a3b8" font-size="8">LIFT</text>
 
-              <!-- Meeting rooms — right column -->
-              <!-- MR-101 -->
               <rect x="528" y="30" width="130" height="85" rx="8"
                     fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
                     id="room-MR-101"/>
@@ -162,7 +150,7 @@
               <text x="593" y="100" text-anchor="middle" fill="#64748b" font-size="8">Lotus · 6 seats</text>
               <circle cx="528" cy="72" r="4" fill="#10b981" id="pt-MR-101"/>
 
-              <!-- MR-102 -->
+
               <rect x="528" y="130" width="130" height="85" rx="8"
                     fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
                     id="room-MR-102"/>
@@ -171,7 +159,6 @@
               <text x="593" y="200" text-anchor="middle" fill="#64748b" font-size="8">Orchid · 4 seats</text>
               <circle cx="528" cy="172" r="4" fill="#10b981" id="pt-MR-102"/>
 
-              <!-- MR-103 -->
               <rect x="528" y="230" width="130" height="85" rx="8"
                     fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
                     id="room-MR-103"/>
@@ -180,7 +167,6 @@
               <text x="593" y="300" text-anchor="middle" fill="#64748b" font-size="8">Jasmine · 8 seats</text>
               <circle cx="528" cy="272" r="4" fill="#10b981" id="pt-MR-103"/>
 
-              <!-- MR-104 -->
               <rect x="528" y="330" width="130" height="85" rx="8"
                     fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.45)" stroke-width="1.5"
                     id="room-MR-104"/>
@@ -189,8 +175,7 @@
               <text x="593" y="400" text-anchor="middle" fill="#64748b" font-size="8">Rose · 10 seats</text>
               <circle cx="528" cy="372" r="4" fill="#10b981" id="pt-MR-104"/>
 
-              <!-- Far right -->
-              <!-- MR-201 -->
+              
               <rect x="672" y="30" width="106" height="85" rx="8"
                     fill="rgba(6,182,212,0.10)" stroke="rgba(6,182,212,0.4)" stroke-width="1.5"
                     id="room-MR-201"/>
@@ -199,7 +184,6 @@
               <text x="725" y="100" text-anchor="middle" fill="#64748b" font-size="8">Tulip · 10 seats</text>
               <circle cx="672" cy="72" r="4" fill="#06b6d4" id="pt-MR-201"/>
 
-              <!-- MR-202 -->
               <rect x="672" y="130" width="106" height="85" rx="8"
                     fill="rgba(6,182,212,0.10)" stroke="rgba(6,182,212,0.4)" stroke-width="1.5"
                     id="room-MR-202"/>
@@ -208,20 +192,17 @@
               <text x="725" y="200" text-anchor="middle" fill="#64748b" font-size="8">Iris · 6 seats</text>
               <circle cx="672" cy="172" r="4" fill="#06b6d4" id="pt-MR-202"/>
 
-              <!-- Navigation path (hidden until route shown) -->
               <g id="routePath" style="display:none;">
                 <path id="navPath" d="" stroke="url(#pathGrad)" stroke-width="3.5" fill="none"
                       stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"
                       marker-end="url(#arrowHead)"/>
               </g>
 
-              <!-- Visitor dot -->
               <circle id="movingDot" cx="-20" cy="-20" r="9" fill="#6366f1" filter="url(#softGlow)" opacity="0.95"/>
               <circle id="movingRing" cx="-20" cy="-20" r="14" fill="none" stroke="#6366f1" stroke-width="1.5" opacity="0.5"/>
             </svg>
           </div>
 
-          <!-- Legend -->
           <div style="display:flex;gap:16px;padding:12px 20px;border-top:1px solid var(--border-subtle);flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
               <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;"></div>Gate
@@ -244,7 +225,6 @@
           </div>
         </div>
 
-        <!-- Directions panel -->
         <div class="card" style="display:flex;flex-direction:column;">
           <div class="card-header">
             <h3>📝 Step-by-Step Directions</h3>
@@ -257,7 +237,6 @@
             </div>
           </div>
 
-          <!-- Active visitor info -->
           <div id="visitorInfo" class="hidden" style="padding:14px;border-top:1px solid var(--border-subtle);">
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">ACTIVE VISITOR</div>
             <div id="visitorInfoContent"></div>
@@ -324,7 +303,6 @@ function showRoute() {
 
   const route = _routes[roomCode] || _routes['MR-101'];
 
-  // Highlight destination room
   document.querySelectorAll('[id^="room-"]').forEach(el => {
     el.setAttribute('stroke-opacity', '0.45');
     el.setAttribute('fill-opacity', '0.10');
@@ -336,15 +314,12 @@ function showRoute() {
     dest.style.filter = 'url(#glow)';
   }
 
-  // Draw path
   document.getElementById('routePath').style.display = 'block';
   document.getElementById('navPath').setAttribute('d', route.path);
 
-  // Animate visitor dot
   if (_animFrameId) cancelAnimationFrame(_animFrameId);
   animateDot(route.path);
 
-  // Show visitor info card
   if (vSel.value) {
     const visitor = _activeVisitors.find(v => v.id == vSel.value);
     if (visitor) {
@@ -361,7 +336,6 @@ function showRoute() {
     }
   }
 
-  // Build directions
   const steps = buildSteps(roomCode, route.room);
   document.getElementById('directions').innerHTML = `
     <div style="padding:4px 0;">

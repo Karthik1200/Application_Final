@@ -28,16 +28,13 @@ public class TrackingService {
     private static final Set<VisitorLocation> RESTRICTED_ZONES = Set.of(VisitorLocation.RESTRICTED_ZONE);
     private static final long MAX_DWELL_TIME_MINUTES = 30;
 
-    /**
-     * Record visitor location event
-     */
+    
     public LocationEvent recordLocation(Long visitorId, VisitorLocation location,
                                          String zoneId, String floor,
                                          Double posX, Double posY) {
         Visitor visitor = visitorRepository.findById(visitorId)
                 .orElseThrow(() -> new RuntimeException("Visitor not found"));
 
-        // Calculate dwell time from previous location
         Long dwellTime = null;
         Optional<LocationEvent> lastEvent = locationEventRepository.findFirstByVisitorIdOrderByTimestampDesc(visitorId);
         if (lastEvent.isPresent()) {
@@ -62,14 +59,12 @@ public class TrackingService {
 
         event = locationEventRepository.save(event);
 
-        // Alert if restricted zone
         if (isRestricted) {
             notificationService.notifyRestrictedZone(visitorId, visitor.getFullName());
             auditService.log("RESTRICTED_ZONE", "VISITOR", visitorId,
                     "SYSTEM", "SYSTEM", "Visitor entered restricted zone: " + location);
         }
 
-        // Broadcast location update via WebSocket
         Map<String, Object> wsPayload = new HashMap<>();
         wsPayload.put("type", "LOCATION_UPDATE");
         wsPayload.put("visitorId", visitorId);
@@ -85,9 +80,7 @@ public class TrackingService {
         return event;
     }
 
-    /**
-     * Get current locations of all active visitors
-     */
+    
     public List<Map<String, Object>> getAllVisitorLocations() {
         List<Visitor> activeVisitors = visitorRepository.findActiveVisitors();
         List<Map<String, Object>> locations = new ArrayList<>();
@@ -125,16 +118,12 @@ public class TrackingService {
         return locations;
     }
 
-    /**
-     * Get visitor movement history
-     */
+    
     public List<LocationEvent> getVisitorHistory(Long visitorId) {
         return locationEventRepository.findByVisitorIdOrderByTimestampDesc(visitorId);
     }
 
-    /**
-     * Get location heatmap data
-     */
+    
     public List<Map<String, Object>> getHeatmapData() {
         LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
         List<Object[]> rawData = locationEventRepository.findLocationHeatmap(today);
@@ -147,9 +136,7 @@ public class TrackingService {
         }).collect(Collectors.toList());
     }
 
-    /**
-     * Check for timeout violations - runs every 5 minutes
-     */
+    
     @Scheduled(fixedRate = 300000)
     public void checkTimeoutViolations() {
         List<Visitor> activeVisitors = visitorRepository.findActiveVisitors();
@@ -165,9 +152,7 @@ public class TrackingService {
         }
     }
 
-    /**
-     * Emergency: Get all visitor locations for evacuation
-     */
+    
     public List<Map<String, Object>> getEmergencyLocations() {
         notificationService.notifyEmergency("Emergency protocol activated! All visitors being tracked.");
         return getAllVisitorLocations();

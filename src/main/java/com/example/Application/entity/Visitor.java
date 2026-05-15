@@ -25,7 +25,7 @@ public class Visitor {
 
     private String company;
 
-    private String idType; // Aadhar, Passport, DrivingLicense
+    private String idType; 
 
     private String idNumber;
 
@@ -46,7 +46,7 @@ public class Visitor {
     @Column(nullable = false)
     private VisitorStatus status;
 
-    private String qrCode; // Encrypted QR code data
+    private String qrCode; 
 
     private String qrImageBase64;
 

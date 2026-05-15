@@ -58,7 +58,6 @@ public class AdminApiController {
         return ResponseEntity.ok(ApiResponseDTO.success("Notification marked as read", null));
     }
 
-    // ── Export endpoints ──────────────────────────────────────────────────────
 
     @GetMapping("/export/visitors/pdf")
     public ResponseEntity<byte[]> exportVisitorsPdf() throws Exception {

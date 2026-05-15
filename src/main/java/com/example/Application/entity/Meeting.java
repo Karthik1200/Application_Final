@@ -39,7 +39,7 @@ public class Meeting {
     private LocalDateTime actualEnd;
 
     @Column(nullable = false)
-    private String status; // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED, EXTENDED
+    private String status; 
 
     private boolean hostConfirmed;
 

@@ -6,7 +6,6 @@
   <title>Visitor Pre-Registration — VRGT System</title>
   <link rel="stylesheet" href="/css/styles.css">
   <style>
-    /* ── Channel selector ── */
     .channel-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -43,12 +42,10 @@
     .channel-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
     .channel-desc { font-size: 10px; color: var(--text-muted); text-align: center; }
 
-    /* ── Resend timer ── */
     #resendRow { display:flex; align-items:center; gap:10px; justify-content:center; margin-top:10px; font-size:13px; }
     #resendBtn { padding:4px 14px; font-size:12px; }
     #resendTimer { color:var(--text-muted); font-size:12px; }
 
-    /* ── OTP channel badge ── */
     .channel-sent-badges { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
     .ch-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; background:rgba(16,185,129,0.15); color:var(--success-light); border:1px solid rgba(16,185,129,0.3); }
   </style>
@@ -57,7 +54,6 @@
 <div class="register-page">
   <div class="register-container">
 
-    <!-- Header -->
     <div class="register-header">
       <div class="logo-row">
         <div class="logo-icon">📋</div>
@@ -68,7 +64,6 @@
       <p>Complete all 3 steps to receive your secure QR pass</p>
     </div>
 
-    <!-- Step indicators -->
     <div class="steps mb-6" id="stepIndicator">
       <div class="step active" id="si1">
         <div class="step-circle">1</div>
@@ -86,10 +81,8 @@
       </div>
     </div>
 
-    <!-- Card -->
     <div class="register-card">
 
-      <!-- ── Step 1: Registration ── -->
       <div id="step1">
         <div id="regError" class="info-box danger hidden mb-4"></div>
         <form id="registerForm" onsubmit="handleRegister(event)">
@@ -148,7 +141,6 @@
             </div>
           </div>
 
-          <!-- OTP Channel selector -->
           <div class="form-group">
             <label class="form-label">Send OTP via *</label>
             <div class="channel-grid">
@@ -193,7 +185,6 @@
         </div>
       </div>
 
-      <!-- ── Step 2: OTP ── -->
       <div id="step2" class="hidden">
         <div style="text-align:center;padding:10px 0 20px;">
           <div style="font-size:48px;margin-bottom:12px;">🔐</div>
@@ -201,10 +192,8 @@
           <p class="text-muted text-sm" id="otpSubtitle">Enter the 6-digit OTP sent to your registered channels</p>
         </div>
 
-        <!-- Channel badges showing where OTP was sent -->
         <div class="channel-sent-badges" id="sentBadges"></div>
 
-        <!-- Dev-mode OTP hint (only shown when MSG91 not configured) -->
         <div id="otpDemoBox" class="info-box info mb-4 hidden">
           <span>ℹ</span>
           <span id="otpDemoText"></span>
@@ -225,7 +214,6 @@
           ✅ Verify OTP
         </button>
 
-        <!-- Resend row -->
         <div id="resendRow">
           <span style="color:var(--text-muted);">Didn't receive it?</span>
           <button class="btn btn-outline btn-sm" id="resendBtn" onclick="resendOtp()" disabled>
@@ -234,7 +222,6 @@
           <span id="resendTimer">Resend in <strong id="resendCountdown">30</strong>s</span>
         </div>
 
-        <!-- Resend channel selector -->
         <div id="resendChannelRow" style="display:none;text-align:center;margin-top:10px;">
           <span style="font-size:12px;color:var(--text-muted);margin-right:8px;">Resend via:</span>
           <label style="font-size:12px;cursor:pointer;margin-right:8px;">
@@ -251,7 +238,6 @@
         <button class="btn btn-ghost btn-block mt-2" onclick="setStep(1)">← Back to Details</button>
       </div>
 
-      <!-- ── Step 3: QR Pass ── -->
       <div id="step3" class="hidden">
         <div class="qr-display">
           <div class="info-box success mb-4">
@@ -278,7 +264,7 @@
         </div>
       </div>
 
-    </div><!-- /register-card -->
+    </div>
   </div>
 </div>
 
@@ -288,7 +274,6 @@ let _visitorId       = null;
 let _resendInterval  = null;
 let _selectedChannels = 'sms';
 
-/* ── OTP digit keyboard navigation ── */
 document.addEventListener('DOMContentLoaded', () => {
   const digits = document.querySelectorAll('.otp-digit');
   digits.forEach((d, i) => {
@@ -310,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // At least one channel must stay checked
   document.querySelectorAll('input[name="otpChannel"]').forEach(cb => {
     cb.addEventListener('change', () => {
       const checked = document.querySelectorAll('input[name="otpChannel"]:checked');
@@ -343,7 +327,6 @@ function setStep(n) {
   if (n === 2) startResendCountdown();
 }
 
-/* ── Step 1 submit ── */
 async function handleRegister(e) {
   e.preventDefault();
   const btn = document.getElementById('registerBtn');
@@ -379,7 +362,6 @@ async function handleRegister(e) {
     buildSentBadges(_selectedChannels);
     buildSubtitle(_selectedChannels);
 
-    // Show OTP in dev mode (message contains the OTP)
     const msg = result.message || '';
     const otpMatch = msg.match(/OTP:\s*(\d{6})/);
     if (otpMatch) {
@@ -441,13 +423,11 @@ async function verifyOtp() {
   } else {
     err.innerHTML = result.message || 'Invalid OTP. Please try again.';
     err.classList.remove('hidden');
-    // Shake OTP inputs
     document.getElementById('otpInputs').style.animation = 'none';
     setTimeout(() => document.getElementById('otpInputs').style.animation = '', 10);
   }
 }
 
-/* ── Resend OTP ── */
 function startResendCountdown() {
   clearInterval(_resendInterval);
   let secs = 30;
@@ -476,7 +456,6 @@ async function resendOtp() {
   const btn = document.getElementById('resendBtn');
   setLoading(btn, 'Sending…');
 
-  // Gather resend channels
   const resendChannels = [...document.querySelectorAll('#resendChannelRow input:checked')]
     .map(cb => cb.value).join(',') || 'sms';
 
@@ -488,7 +467,6 @@ async function resendOtp() {
 
   if (result.success) {
     Toast.success('OTP resent via ' + resendChannels.replace(',', ' + '));
-    // Clear current inputs
     document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
     document.querySelector('.otp-digit').focus();
     startResendCountdown();
@@ -497,7 +475,6 @@ async function resendOtp() {
   }
 }
 
-/* ── QR download ── */
 function downloadQR() {
   const img = document.getElementById('qrImage');
   if (!img.src || img.src === window.location.href) return;

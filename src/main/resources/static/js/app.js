@@ -1,8 +1,3 @@
-// ============================================================
-//  VRGT Core Application JS v2.0
-// ============================================================
-
-/* ── API Client ─────────────────────────────────────────── */
 const API = {
   async request(url, options = {}) {
     const cfg = {
@@ -27,7 +22,6 @@ const API = {
   put(url, body)  { return this.request(url, { method: 'PUT',  body }); },
   del(url)        { return this.request(url, { method: 'DELETE' }); },
 
-  /* Trigger a file download from a GET endpoint */
   download(url, filename) {
     const a = document.createElement('a');
     a.href = url;
@@ -38,7 +32,6 @@ const API = {
   }
 };
 
-/* ── Toast ──────────────────────────────────────────────── */
 const Toast = {
   _container: null,
   _get() {
@@ -69,7 +62,6 @@ const Toast = {
   info(m, ms)    { this.show(m, 'info',    ms); },
 };
 
-/* ── Clock ──────────────────────────────────────────────── */
 function _updateClock() {
   const el = document.getElementById('headerTime');
   if (el) {
@@ -82,7 +74,6 @@ function _updateClock() {
 setInterval(_updateClock, 1000);
 document.addEventListener('DOMContentLoaded', _updateClock);
 
-/* ── WebSocket ──────────────────────────────────────────── */
 let _stompClient = null;
 let _wsRetries   = 0;
 
@@ -117,7 +108,6 @@ function _incNotifBadge() {
   });
 }
 
-/* ── Tabs ───────────────────────────────────────────────── */
 function initTabs(navSelector, panelSelector) {
   document.querySelectorAll(navSelector).forEach(btn => {
     btn.addEventListener('click', () => {
@@ -130,7 +120,6 @@ function initTabs(navSelector, panelSelector) {
   });
 }
 
-/* ── Badge helper ───────────────────────────────────────── */
 function getStatusBadge(status) {
   const map = {
     PRE_REGISTERED:  { cls: 'pre-registered',  label: 'Pre-Registered' },
@@ -152,7 +141,6 @@ function getStatusBadge(status) {
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
-/* ── Time formatting ────────────────────────────────────── */
 function timeAgo(dateStr) {
   if (!dateStr) return '—';
   const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
@@ -169,13 +157,11 @@ function fmtTime(dateStr) {
   });
 }
 
-/* ── Initials avatar ────────────────────────────────────── */
 function initials(name) {
   if (!name) return '?';
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
-/* ── Avatar color from name ─────────────────────────────── */
 const _avatarColors = ['#6366f1','#06b6d4','#10b981','#f59e0b','#a855f7','#ef4444','#3b82f6'];
 function avatarColor(name) {
   let h = 0;
@@ -183,7 +169,6 @@ function avatarColor(name) {
   return _avatarColors[Math.abs(h) % _avatarColors.length];
 }
 
-/* ── Loading state helpers ──────────────────────────────── */
 function setLoading(el, text = 'Loading…') {
   if (!el) return;
   el._orig = el.innerHTML;
@@ -197,7 +182,6 @@ function clearLoading(el) {
   el._orig = null;
 }
 
-/* ── Confirm dialog ─────────────────────────────────────── */
 function confirm2(msg) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
@@ -217,7 +201,6 @@ function confirm2(msg) {
   });
 }
 
-/* ── Search filter on table ─────────────────────────────── */
 function liveSearch(inputId, tableBodyId) {
   const input = document.getElementById(inputId);
   const tbody = document.getElementById(tableBodyId);
@@ -230,19 +213,16 @@ function liveSearch(inputId, tableBodyId) {
   });
 }
 
-/* ── Logout ─────────────────────────────────────────────── */
 async function logout() {
   await API.post('/api/auth/logout');
   localStorage.removeItem('user');
   window.location.href = '/login';
 }
 
-/* ── User info from localStorage ────────────────────────── */
 function currentUser() {
   try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
 }
 
-/* ── Set user info in header ────────────────────────────── */
 function initUserHeader() {
   const u = currentUser();
   if (!u.username) return;
@@ -250,7 +230,6 @@ function initUserHeader() {
   document.querySelectorAll('.user-avatar').forEach(el => el.textContent = initials(u.fullName || u.username));
 }
 
-/* ── Init ───────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   connectWebSocket();
   initUserHeader();

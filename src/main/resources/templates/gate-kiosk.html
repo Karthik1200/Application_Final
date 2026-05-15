@@ -11,7 +11,6 @@
 <body>
 <div class="app-layout">
 
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🏢</div>
@@ -49,7 +48,6 @@
 
     <div class="page-content">
 
-      <!-- KPI Row -->
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
         <div class="stat-card primary">
           <div class="stat-row">
@@ -89,10 +87,8 @@
         </div>
       </div>
 
-      <!-- Main grid -->
       <div class="grid-2 mb-4">
 
-        <!-- QR Scanner Panel -->
         <div class="card">
           <div class="card-header">
             <h3>📷 QR Scanner</h3>
@@ -103,7 +99,6 @@
             </select>
           </div>
 
-          <!-- Scan zone -->
           <div class="scan-zone" id="scanZone" onclick="document.getElementById('qrInput').focus()">
             <div class="scan-icon">📷</div>
             <p>Click to focus • Scan QR or paste encrypted data</p>
@@ -121,11 +116,9 @@
             <button class="btn btn-ghost btn-icon" onclick="clearScan()" title="Clear">✕</button>
           </div>
 
-          <!-- Scan result -->
           <div id="scanResult" class="hidden mt-3"></div>
         </div>
 
-        <!-- Recent Gate Logs -->
         <div class="card">
           <div class="card-header">
             <h3>📋 Recent Entries</h3>
@@ -152,7 +145,6 @@
         </div>
       </div>
 
-      <!-- Manual ID Verification -->
       <div class="card">
         <div class="card-header">
           <h3>🪪 Manual ID Verification</h3>

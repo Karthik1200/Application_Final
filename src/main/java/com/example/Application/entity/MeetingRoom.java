@@ -15,7 +15,7 @@ public class MeetingRoom {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String roomCode; // MR-101, MR-201 etc.
+    private String roomCode; 
 
     @Column(nullable = false)
     private String roomName;
@@ -29,9 +29,9 @@ public class MeetingRoom {
     @Column(nullable = false)
     private RoomStatus status;
 
-    private String facilities; // Projector, Whiteboard, Video Conf
+    private String facilities; 
 
-    private String locationX; // Map coordinates
+    private String locationX; 
 
     private String locationY;
 

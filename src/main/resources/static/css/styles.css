@@ -1,13 +1,6 @@
-/* ============================================================
-   VRGT Design System v2.0
-   Visitor Route Guidance & Tracking — Enterprise UI
-   ============================================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── CSS Variables ─────────────────────────────────────────── */
 :root {
-  /* Brand Colors */
   --primary:        #6366f1;
   --primary-light:  #818cf8;
   --primary-dark:   #4f46e5;
@@ -28,7 +21,6 @@
   --purple:         #a855f7;
   --purple-light:   #c084fc;
 
-  /* Dark Background System */
   --bg-base:        #080818;
   --bg-primary:     #0c0c20;
   --bg-secondary:   #111128;
@@ -38,18 +30,15 @@
   --bg-input:       #0f0f25;
   --bg-sidebar:     #0a0a1e;
 
-  /* Borders */
   --border:         rgba(99,102,241,0.18);
   --border-light:   rgba(255,255,255,0.06);
   --border-subtle:  rgba(255,255,255,0.03);
 
-  /* Text */
   --text-primary:   #f0f2ff;
   --text-secondary: #94a3b8;
   --text-muted:     #64748b;
   --text-faint:     #374151;
 
-  /* Shadows */
   --shadow-xs:  0 1px 3px rgba(0,0,0,0.4);
   --shadow-sm:  0 2px 8px rgba(0,0,0,0.5);
   --shadow-md:  0 4px 20px rgba(0,0,0,0.6);
@@ -58,7 +47,6 @@
   --glow:       0 0 30px rgba(99,102,241,0.2);
   --glow-lg:    0 0 60px rgba(99,102,241,0.15);
 
-  /* Radii */
   --r-xs:  4px;
   --r-sm:  8px;
   --r-md:  12px;
@@ -67,17 +55,14 @@
   --r-2xl: 28px;
   --r-full:9999px;
 
-  /* Transitions */
   --t-fast:   0.12s ease;
   --t-normal: 0.25s ease;
   --t-slow:   0.4s ease;
 
-  /* Layout */
   --sidebar-w: 264px;
   --header-h:  64px;
 }
 
-/* ── Reset ─────────────────────────────────────────────────── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior:smooth; font-size:16px; }
 body {
@@ -89,7 +74,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Ambient background glow */
 body::before {
   content: '';
   position: fixed;
@@ -105,15 +89,12 @@ body::before {
 a { color: var(--primary-light); text-decoration: none; transition: var(--t-fast); }
 a:hover { color: var(--secondary-light); }
 
-/* ── Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb { background: var(--primary-dark); border-radius:3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-/* ============================================================
-   LAYOUT
-   ============================================================ */
+
 .app-layout {
   display: flex;
   min-height: 100vh;
@@ -121,7 +102,6 @@ a:hover { color: var(--secondary-light); }
   z-index: 1;
 }
 
-/* ── Sidebar ───────────────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-w);
   background: var(--bg-sidebar);
@@ -204,7 +184,6 @@ a:hover { color: var(--secondary-light); }
   border-top: 1px solid var(--border);
 }
 
-/* ── Main Content ──────────────────────────────────────────── */
 .main-content {
   flex: 1;
   margin-left: var(--sidebar-w);
@@ -213,7 +192,6 @@ a:hover { color: var(--secondary-light); }
   flex-direction: column;
 }
 
-/* ── Top Header ────────────────────────────────────────────── */
 .top-header {
   background: rgba(12,12,32,0.85);
   backdrop-filter: blur(24px);
@@ -289,7 +267,6 @@ a:hover { color: var(--secondary-light); }
 }
 .user-pill .user-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
 
-/* ── Page Content ──────────────────────────────────────────── */
 .page-content { padding: 24px 28px; flex: 1; }
 .page-title {
   font-size: 13px; font-weight: 600;
@@ -301,9 +278,7 @@ a:hover { color: var(--secondary-light); }
 }
 .page-title::before { content:''; width:16px; height:2px; background:var(--primary); border-radius:1px; }
 
-/* ============================================================
-   CARDS
-   ============================================================ */
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -329,19 +304,15 @@ a:hover { color: var(--secondary-light); }
 .card-header h3 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .card-actions { display: flex; align-items: center; gap: 8px; }
 
-/* Glass card variant */
 .card-glass {
   background: rgba(21,21,48,0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-/* Glow card variant */
 .card-glow { box-shadow: var(--glow); border-color: rgba(99,102,241,0.35); }
 
-/* ============================================================
-   STAT CARDS
-   ============================================================ */
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -361,7 +332,6 @@ a:hover { color: var(--secondary-light); }
 }
 .stat-card:hover { transform: translateY(-3px); box-shadow: var(--glow); }
 
-/* Color accents */
 .stat-card.primary   { border-top: 2px solid var(--primary); }
 .stat-card.success   { border-top: 2px solid var(--success); }
 .stat-card.warning   { border-top: 2px solid var(--warning); }
@@ -370,7 +340,6 @@ a:hover { color: var(--secondary-light); }
 .stat-card.secondary { border-top: 2px solid var(--secondary); }
 .stat-card.purple    { border-top: 2px solid var(--purple); }
 
-/* Corner glow orb */
 .stat-card::after {
   content: '';
   position: absolute;
@@ -417,9 +386,8 @@ a:hover { color: var(--secondary-light); }
 .stat-trend.up   { color: var(--success-light); }
 .stat-trend.down { color: var(--danger-light); }
 
-/* ============================================================
-   BUTTONS
-   ============================================================ */
+
+
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   padding: 9px 18px;
@@ -494,9 +462,7 @@ a:hover { color: var(--secondary-light); }
 .btn-block { width: 100%; }
 .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: var(--r-sm); }
 
-/* ============================================================
-   FORMS
-   ============================================================ */
+
 .form-group { margin-bottom: 18px; }
 
 .form-label {
@@ -538,7 +504,6 @@ select.form-control {
 .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
 .form-error { font-size: 12px; color: var(--danger-light); margin-top: 5px; }
 
-/* Input with icon */
 .input-group {
   position: relative;
 }
@@ -551,9 +516,7 @@ select.form-control {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
 }
 
-/* ============================================================
-   TABLES
-   ============================================================ */
+
 .table-wrapper { overflow-x: auto; border-radius: var(--r-md); }
 .table-wrapper.scrollable { max-height: 420px; overflow-y: auto; }
 
@@ -588,9 +551,7 @@ tbody td {
 .td-muted { color: var(--text-muted); font-size: 12px; }
 .td-mono  { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
 
-/* ============================================================
-   STATUS BADGES
-   ============================================================ */
+
 .badge {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 10px;
@@ -605,7 +566,6 @@ tbody td {
   animation: pulse-dot 2.5s infinite;
 }
 
-/* Status variants */
 .badge.pre-registered  { background: rgba(99,102,241,0.15); color: var(--primary-light);  }
 .badge.pre-registered::before { background: var(--primary-light); }
 .badge.verified        { background: rgba(6,182,212,0.15);  color: var(--secondary-light); }
@@ -637,12 +597,9 @@ tbody td {
 
 @keyframes pulse-dot { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-/* Legacy alias */
 .badge-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--r-full); font-size: 11.5px; font-weight: 600; white-space: nowrap; }
 
-/* ============================================================
-   TABS
-   ============================================================ */
+
 .tabs { margin-bottom: 24px; }
 
 .tab-nav {
@@ -682,9 +639,7 @@ tbody td {
 .tab-panel { display: none; }
 .tab-panel.active { display: block; animation: fade-up 0.2s ease; }
 
-/* ============================================================
-   STEPS WIZARD
-   ============================================================ */
+
 .steps {
   display: flex; align-items: center;
   margin-bottom: 36px;
@@ -734,9 +689,7 @@ tbody td {
 .step.completed + .step .step-line,
 .step.completed .step-line { background: var(--success); }
 
-/* ============================================================
-   SEARCH & FILTER BAR
-   ============================================================ */
+
 .filter-bar {
   display: flex; align-items: center; gap: 10px;
   margin-bottom: 16px;
@@ -782,9 +735,7 @@ tbody td {
   color: var(--primary-light);
 }
 
-/* ============================================================
-   PROGRESS BAR
-   ============================================================ */
+
 .progress-bar {
   height: 6px; border-radius: var(--r-full);
   background: var(--bg-hover);
@@ -799,9 +750,7 @@ tbody td {
 .progress-fill.danger  { background: linear-gradient(90deg, var(--danger), var(--danger-light)); }
 .progress-fill.warning { background: linear-gradient(90deg, var(--warning), var(--accent-light)); }
 
-/* ============================================================
-   LOGIN PAGE
-   ============================================================ */
+
 .login-page {
   display: flex;
   min-height: 100vh;
@@ -901,9 +850,7 @@ tbody td {
 }
 .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
-/* ============================================================
-   REGISTER PAGE
-   ============================================================ */
+
 .register-page {
   min-height: 100vh;
   display: flex; align-items: flex-start; justify-content: center;
@@ -982,9 +929,7 @@ tbody td {
 .info-box.warning { background: rgba(245,158,11,0.1);  border: 1px solid rgba(245,158,11,0.25);  color: var(--accent-light); }
 .info-box.danger  { background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.25);   color: var(--danger-light); }
 
-/* ============================================================
-   GATE KIOSK
-   ============================================================ */
+
 .scan-zone {
   border: 2px dashed rgba(99,102,241,0.4);
   border-radius: var(--r-lg);
@@ -1027,9 +972,7 @@ tbody td {
 }
 .visitor-info-chip strong { color: var(--text-primary); }
 
-/* ============================================================
-   VISITOR CARDS (Reception Queue)
-   ============================================================ */
+
 .visitor-queue { display: flex; flex-direction: column; gap: 10px; }
 
 .visitor-card {
@@ -1062,9 +1005,7 @@ tbody td {
 .visitor-card .vc-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .visitor-card .vc-time { font-size: 11px; color: var(--text-faint); font-family: 'JetBrains Mono', monospace; }
 
-/* ============================================================
-   MEETING ROOM CARDS
-   ============================================================ */
+
 .rooms-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1110,9 +1051,7 @@ tbody td {
 .room-card.occupied .capacity-fill  { background: var(--danger); }
 .room-card.reserved .capacity-fill  { background: var(--warning); }
 
-/* ============================================================
-   INDOOR MAP
-   ============================================================ */
+
 .map-container {
   background: rgba(8,8,24,0.6);
   border: 1px solid var(--border);
@@ -1159,9 +1098,7 @@ tbody td {
 }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-/* ============================================================
-   NOTIFICATIONS
-   ============================================================ */
+
 .notif-list { display: flex; flex-direction: column; }
 
 .notif-item {
@@ -1196,9 +1133,7 @@ tbody td {
 .notif-msg   { font-size: 12.5px; color: var(--text-secondary); line-height: 1.4; }
 .notif-time  { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
 
-/* ============================================================
-   TIMELINE / AUDIT TRAIL
-   ============================================================ */
+
 .timeline { padding-left: 20px; position: relative; }
 .timeline::before {
   content: ''; position: absolute;
@@ -1221,9 +1156,7 @@ tbody td {
 .timeline-item .ti-desc  { font-size: 12px; color: var(--text-secondary); }
 .timeline-item .ti-by    { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
 
-/* ============================================================
-   EMERGENCY BANNER
-   ============================================================ */
+
 .emergency-banner {
   background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(220,38,38,0.95));
   color: white; padding: 14px 28px;
@@ -1233,9 +1166,7 @@ tbody td {
 }
 @keyframes emergency-flash { 0%,100% { opacity:1; } 50% { opacity:0.85; } }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
+
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.75);
@@ -1265,9 +1196,7 @@ tbody td {
 .modal-close:hover { color: var(--danger); }
 .modal-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 10px; }
 
-/* ============================================================
-   TOAST
-   ============================================================ */
+
 .toast-container {
   position: fixed; top: 18px; right: 18px;
   z-index: 10000;
@@ -1289,9 +1218,7 @@ tbody td {
 .toast.warning { background: rgba(245,158,11,0.92);  border-left-color: #b45309; color: white; }
 .toast.info    { background: rgba(59,130,246,0.92);  border-left-color: #1d4ed8; color: white; }
 
-/* ============================================================
-   SPINNER / LOADING
-   ============================================================ */
+
 .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
 .spinner-sm { width: 18px; height: 18px; border-width: 2px; }
 
@@ -1300,9 +1227,7 @@ tbody td {
 .skeleton { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--r-sm); }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-/* ============================================================
-   EMPTY STATE
-   ============================================================ */
+
 .empty-state {
   text-align: center; padding: 50px 20px;
   color: var(--text-muted);
@@ -1311,9 +1236,7 @@ tbody td {
 .empty-state h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 6px; }
 .empty-state p  { font-size: 13px; }
 
-/* ============================================================
-   GRID UTILITIES
-   ============================================================ */
+
 .grid-2     { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .grid-3     { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .grid-4     { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
@@ -1321,9 +1244,7 @@ tbody td {
 .grid-1-2   { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
 .grid-3-1   { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
 
-/* ============================================================
-   KEYFRAMES
-   ============================================================ */
+
 @keyframes fade-in  { from { opacity:0; } to { opacity:1; } }
 @keyframes fade-up  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 @keyframes modal-up { from { opacity:0; transform:scale(0.94) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
@@ -1338,9 +1259,7 @@ tbody td {
 .path-line { stroke-dasharray: 8 4; fill: none; animation: dash-flow 1s linear infinite; }
 @keyframes dash-flow { to { stroke-dashoffset:-12; } }
 
-/* ============================================================
-   UTILITY
-   ============================================================ */
+
 .flex           { display: flex; }
 .flex-col       { flex-direction: column; }
 .items-center   { align-items: center; }
@@ -1412,9 +1331,7 @@ tbody td {
   border: 2px solid var(--bg-primary);
 }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
+
 @media (max-width: 1024px) {
   .grid-3-1, .grid-2-1 { grid-template-columns: 1fr; }
   .login-left { display: none; }
@@ -1433,9 +1350,7 @@ tbody td {
   .login-right { padding: 30px 20px; }
 }
 
-/* ============================================================
-   PRINT STYLES
-   ============================================================ */
+
 @media print {
   .sidebar, .top-header, .btn, .tab-nav, .filter-bar { display: none !important; }
   .main-content { margin-left: 0; }

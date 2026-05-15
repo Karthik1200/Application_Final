@@ -39,7 +39,6 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole().name(), user.getId());
 
-        // Set JWT as cookie
         Cookie cookie = new Cookie("jwt_token", token);
         cookie.setHttpOnly(true);
         cookie.setPath("/");

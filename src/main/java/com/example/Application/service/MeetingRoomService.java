@@ -47,7 +47,6 @@ public class MeetingRoomService {
         meeting.setActualStart(LocalDateTime.now());
         meetingRepository.save(meeting);
 
-        // Update room status
         MeetingRoom room = meetingRoomRepository.findById(meeting.getRoomId()).orElse(null);
         if (room != null) {
             room.setStatus(RoomStatus.OCCUPIED);
@@ -83,7 +82,6 @@ public class MeetingRoomService {
         meeting.setActualEnd(LocalDateTime.now());
         meetingRepository.save(meeting);
 
-        // Free up room
         MeetingRoom room = meetingRoomRepository.findById(meeting.getRoomId()).orElse(null);
         if (room != null) {
             room.setStatus(RoomStatus.AVAILABLE);

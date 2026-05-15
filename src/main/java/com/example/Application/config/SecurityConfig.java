@@ -28,19 +28,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public pages
                 .requestMatchers("/", "/login", "/register", "/visitor/register", "/visitor/verify-otp").permitAll()
-                // Static resources
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/favicon.ico").permitAll()
-                // Public APIs
                 .requestMatchers("/api/auth/**", "/api/visitor/register", "/api/visitor/verify-otp").permitAll()
-                // Gate APIs (guard access)
                 .requestMatchers("/api/gate/**", "/gate/**").permitAll()
-                // H2 console
                 .requestMatchers("/h2-console/**").permitAll()
-                // WebSocket
                 .requestMatchers("/ws/**").permitAll()
-                // All other requests need authentication
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))

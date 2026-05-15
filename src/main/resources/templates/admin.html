@@ -46,7 +46,6 @@
 
     <div class="page-content">
 
-      <!-- KPIs -->
       <div class="stats-grid mb-4" style="grid-template-columns:repeat(6,1fr);">
         <div class="stat-card primary">
           <div class="stat-row">
@@ -86,7 +85,6 @@
         </div>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs">
         <div class="tab-nav">
           <button class="tab-btn active" data-tab="tabOverview">📊 Overview</button>
@@ -98,7 +96,6 @@
         </div>
       </div>
 
-      <!-- Tab: Overview -->
       <div class="tab-panel active" id="tabOverview">
         <div class="grid-2 mb-4">
           <div class="card">
@@ -110,7 +107,6 @@
             <canvas id="heatChart" height="220"></canvas>
           </div>
         </div>
-        <!-- Mini live map -->
         <div class="card">
           <div class="card-header">
             <h3>🗺 Live Floor Map</h3>
@@ -139,7 +135,6 @@
         </div>
       </div>
 
-      <!-- Tab: Visitors -->
       <div class="tab-panel" id="tabVisitors">
         <div class="card">
           <div class="card-header">
@@ -173,7 +168,6 @@
         </div>
       </div>
 
-      <!-- Tab: Gate Logs -->
       <div class="tab-panel" id="tabGate">
         <div class="card">
           <div class="card-header">
@@ -193,7 +187,6 @@
         </div>
       </div>
 
-      <!-- Tab: Audit -->
       <div class="tab-panel" id="tabAudit">
         <div class="card">
           <div class="card-header">
@@ -212,7 +205,6 @@
         </div>
       </div>
 
-      <!-- Tab: Blacklist -->
       <div class="tab-panel" id="tabBlacklist">
         <div class="card mb-4">
           <div class="card-header">
@@ -232,10 +224,8 @@
         </div>
       </div>
 
-      <!-- Tab: Export -->
       <div class="tab-panel" id="tabExport">
         <div class="grid-3">
-          <!-- Visitors -->
           <div class="card">
             <div class="card-header"><h3>👥 Visitor Log</h3></div>
             <p class="text-sm text-muted mb-4">Export complete visitor registry with status, check-in/out times and host details.</p>
@@ -245,7 +235,6 @@
             </div>
           </div>
 
-          <!-- Gate Logs -->
           <div class="card">
             <div class="card-header"><h3>🚧 Gate Logs</h3></div>
             <p class="text-sm text-muted mb-4">Export all gate entry/exit events with QR validation and ID verification records.</p>
@@ -255,7 +244,6 @@
             </div>
           </div>
 
-          <!-- Audit Trail -->
           <div class="card">
             <div class="card-header"><h3>🔍 Audit Trail</h3></div>
             <p class="text-sm text-muted mb-4">Export full audit trail with who performed each action, timestamps and change records.</p>
@@ -267,11 +255,10 @@
         </div>
       </div>
 
-    </div><!-- /page-content -->
+    </div>
   </main>
 </div>
 
-<!-- Blacklist Modal -->
 <div id="blacklistModal" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-header">
@@ -316,10 +303,8 @@ let _trendChart, _heatChart;
 let _allVisitors = [], _allAudit = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Tabs
   initTabs('.tab-btn', '.tab-panel');
 
-  // Tab-specific loading
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
@@ -350,7 +335,6 @@ async function loadDashboard() {
 }
 
 async function loadCharts() {
-  // Trend
   const tr = await API.get('/api/admin/analytics/visitors?days=7');
   const ctx1 = document.getElementById('trendChart').getContext('2d');
   const labels = tr.data?.map(d => d.date) || ['Today'];
@@ -361,7 +345,6 @@ async function loadCharts() {
     options: { responsive:true, plugins:{legend:{display:false}}, scales: { y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b'}}, x:{grid:{display:false},ticks:{color:'#64748b'}} } }
   });
 
-  // Heatmap
   const hr = await API.get('/api/tracking/heatmap');
   const ctx2 = document.getElementById('heatChart').getContext('2d');
   const hl = hr.data?.map(d => d.location) || ['GATE','LOBBY','RECEPTION','CORRIDOR','MEETING_ROOM'];
@@ -386,7 +369,6 @@ async function loadMiniMap() {
   }).join('');
 }
 
-// Visitors tab
 async function loadAllVisitors() {
   const r = await API.get('/api/visitor/all');
   _allVisitors = r.data || [];
@@ -421,7 +403,6 @@ function renderVisitorTable(list) {
   `).join('');
 }
 
-// Gate tab
 async function loadGateData() {
   const r = await API.get('/api/gate/logs/today');
   const tbody = document.getElementById('gateBody');
@@ -439,7 +420,6 @@ async function loadGateData() {
   `).join('');
 }
 
-// Audit tab
 async function loadAuditData() {
   const r = await API.get('/api/admin/audit-logs');
   _allAudit = r.data || [];
@@ -466,7 +446,6 @@ function renderAudit(logs) {
   `).join('');
 }
 
-// Blacklist tab
 async function loadBlacklist() {
   const r = await API.get('/api/blacklist');
   const tbody = document.getElementById('blacklistBody');
@@ -524,7 +503,6 @@ async function removeBlacklist(id) {
   else Toast.error(r.message);
 }
 
-// Export
 function exportFile(url, filename) {
   Toast.info('Generating ' + filename + '…');
   API.download(url, filename);

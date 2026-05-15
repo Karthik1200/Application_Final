@@ -37,7 +37,6 @@ public class VisitorRegistrationDTO {
 
     private String scheduledTime;
 
-    /** Comma-separated channels: sms, whatsapp, email  (default: sms) */
     @lombok.Builder.Default
     private String otpChannel = "sms";
 }

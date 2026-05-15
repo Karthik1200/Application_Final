@@ -25,16 +25,12 @@ public class ReceptionService {
     @Autowired private NotificationService notificationService;
     @Autowired private SimpMessagingTemplate messagingTemplate;
 
-    /**
-     * Get visitors waiting at reception (checked in at gate)
-     */
+    
     public List<Visitor> getReceptionQueue() {
         return visitorRepository.findReceptionQueue();
     }
 
-    /**
-     * Check-in visitor at reception, assign room, and notify host
-     */
+   
     public Map<String, Object> checkInAtReception(Long visitorId, String roomCode,
                                                     String receptionistUsername) {
         Map<String, Object> result = new HashMap<>();
@@ -51,20 +47,17 @@ public class ReceptionService {
             return result;
         }
 
-        // Update visitor
         visitor.setStatus(VisitorStatus.HOST_CONFIRMED);
         visitor.setReceptionCheckedInAt(LocalDateTime.now());
         visitor.setAssignedRoomId(roomCode);
         visitor.setNfcTagId("NFC-" + visitorId + "-" + System.currentTimeMillis());
         visitorRepository.save(visitor);
 
-        // Update room
         room.setStatus(RoomStatus.RESERVED);
         room.setCurrentOccupancy(room.getCurrentOccupancy() + 1);
         room.setLastStatusUpdate(LocalDateTime.now());
         meetingRoomRepository.save(room);
 
-        // Create meeting record
         Meeting meeting = Meeting.builder()
                 .visitorId(visitorId)
                 .visitorName(visitor.getFullName())
@@ -80,17 +73,14 @@ public class ReceptionService {
                 .build();
         meetingRepository.save(meeting);
 
-        // Audit
         auditService.log("RECEPTION_CHECKIN", "VISITOR", visitorId,
                 receptionistUsername, "RECEPTIONIST",
                 "Checked in at reception, assigned room: " + roomCode);
 
-        // Notify host
         if (visitor.getHostUserId() != null) {
             notificationService.notifyVisitorAtReception(visitorId, visitor.getFullName(), visitor.getHostUserId());
         }
 
-        // Broadcast to tracking dashboard
         Map<String, Object> wsPayload = new HashMap<>();
         wsPayload.put("type", "RECEPTION_CHECKIN");
         wsPayload.put("visitorId", visitorId);
@@ -108,9 +98,7 @@ public class ReceptionService {
         return result;
     }
 
-    /**
-     * Auto-assign closest available room
-     */
+    
     public MeetingRoom autoAssignRoom(int requiredCapacity) {
         List<MeetingRoom> available = meetingRoomRepository
                 .findByStatusAndCapacityGreaterThanEqual(RoomStatus.AVAILABLE, requiredCapacity);
@@ -122,9 +110,7 @@ public class ReceptionService {
         return available.get(0);
     }
 
-    /**
-     * Start visitor route to meeting room
-     */
+    
     public Visitor startRoute(Long visitorId, String performedBy) {
         Visitor visitor = visitorRepository.findById(visitorId)
                 .orElseThrow(() -> new RuntimeException("Visitor not found"));

@@ -38,7 +38,7 @@ public class LocationEvent {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    private Long dwellTimeSeconds; // How long visitor stayed in previous location
+    private Long dwellTimeSeconds; 
 
     @PrePersist
     protected void onCreate() {

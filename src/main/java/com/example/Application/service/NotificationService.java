@@ -40,7 +40,6 @@ public class NotificationService {
 
         notification = notificationRepository.save(notification);
 
-        // Send via WebSocket
         Map<String, Object> wsPayload = new HashMap<>();
         wsPayload.put("id", notification.getId());
         wsPayload.put("type", alertType.name());
@@ -50,15 +49,12 @@ public class NotificationService {
         wsPayload.put("visitorName", visitorName);
         wsPayload.put("timestamp", notification.getCreatedAt().toString());
 
-        // Broadcast to all subscribers
         messagingTemplate.convertAndSend("/topic/notifications", wsPayload);
 
-        // Send to specific user if targeted
         if (targetUserId != null) {
             messagingTemplate.convertAndSend("/topic/notifications/" + targetUserId, wsPayload);
         }
 
-        // Send to role-based channel
         if (targetRole != null) {
             messagingTemplate.convertAndSend("/topic/notifications/role/" + targetRole, wsPayload);
         }

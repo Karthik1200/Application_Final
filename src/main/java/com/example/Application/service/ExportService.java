@@ -34,7 +34,6 @@ public class ExportService {
     @Autowired private AuditService auditService;
     @Autowired private GateService gateService;
 
-    // ── PDF exports ──────────────────────────────────────────────────────────
 
     public byte[] exportVisitorsPdf() throws IOException {
         List<Visitor> visitors = visitorService.getAllVisitors();
@@ -148,7 +147,6 @@ public class ExportService {
         return out.toByteArray();
     }
 
-    // ── Excel exports ─────────────────────────────────────────────────────────
 
     public byte[] exportVisitorsExcel() throws IOException {
         List<Visitor> visitors = visitorService.getAllVisitors();
@@ -237,7 +235,6 @@ public class ExportService {
         }
     }
 
-    // ── PDF helpers ───────────────────────────────────────────────────────────
 
     private void addPdfTitle(Document doc, String title) {
         doc.add(new Paragraph("VRGT System — " + title)
@@ -278,7 +275,6 @@ public class ExportService {
                 .setMarginTop(8));
     }
 
-    // ── Excel helpers ─────────────────────────────────────────────────────────
 
     private CellStyle createExcelHeaderStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();

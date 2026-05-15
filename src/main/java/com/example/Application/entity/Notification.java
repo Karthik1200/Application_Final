@@ -36,7 +36,7 @@ public class Notification {
 
     private boolean sent;
 
-    private String channel; // SMS, EMAIL, TEAMS, PUSH, SYSTEM
+    private String channel; 
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

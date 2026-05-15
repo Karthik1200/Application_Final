@@ -19,10 +19,10 @@ public class GateLog {
     private String visitorName;
 
     @Column(nullable = false)
-    private String gateId; // GATE_1, GATE_2, etc.
+    private String gateId; 
 
     @Column(nullable = false)
-    private String action; // ENTRY, EXIT
+    private String action; 
 
     private String qrScanned;
 
@@ -30,7 +30,7 @@ public class GateLog {
 
     private boolean idVerified;
 
-    private String verifiedBy; // guard username
+    private String verifiedBy; 
 
     private String remarks;
 
