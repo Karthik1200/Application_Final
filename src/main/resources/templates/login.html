@@ -102,8 +102,8 @@
         </div>
       </div> -->
 
-      <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted);">
-        Not a staff member? <a href="/register" style="color:var(--primary-light);font-weight:600;">Pre-register as Visitor →</a>
+      <div style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);">
+        New guest? <a href="/register" style="color:var(--primary-light);font-weight:600;">Create an account →</a>
       </div>
     </div>
   </div>
@@ -111,12 +111,6 @@
 
 <script src="/js/app.js"></script>
 <script>
-function fillCred(u, p) {
-  document.getElementById('username').value = u;
-  document.getElementById('password').value = p;
-  document.getElementById('loginBtn').focus();
-}
-
 function togglePwd() {
   const inp = document.getElementById('password');
   inp.type = inp.type === 'password' ? 'text' : 'password';
@@ -137,12 +131,16 @@ async function handleLogin(e) {
   if (result.success) {
     localStorage.setItem('user', JSON.stringify(result.data));
     const role = result.data.role;
-    const dest = role === 'ADMIN' ? '/admin'
-               : role === 'SECURITY_GUARD' ? '/gate'
-               : role === 'RECEPTIONIST'   ? '/reception'
-               : role === 'HOST'           ? '/tracking'
-               : '/admin';
-    window.location.href = dest;
+    const roleRoutes = {
+      FOUNDER:      '/founder-dashboard',
+      MANAGER:      '/manager-dashboard',
+      ADMIN:        '/admin',
+      FRONT_OFFICE: '/front-office',
+      ROOM_SERVICE: '/room-service',
+      CHEF:         '/chef-dashboard',
+      CLIENT:       '/client-portal',
+    };
+    window.location.href = roleRoutes[role] || '/admin';
   } else {
     err.innerHTML = '⚠ ' + (result.message || 'Invalid credentials');
     err.classList.remove('hidden');

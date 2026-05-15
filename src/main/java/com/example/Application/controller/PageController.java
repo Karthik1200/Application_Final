@@ -55,4 +55,29 @@ public class PageController {
     public String notificationsPage() {
         return "notifications";
     }
+
+    @GetMapping("/emergency")
+    public String emergencyDashboard() {
+        return "emergency";
+    }
+
+    // ── Role-specific dashboards ───────────────────────────────────────────────
+
+    @GetMapping("/founder-dashboard")
+    public String founderDashboard() { return "founder-dashboard"; }
+
+    @GetMapping("/manager-dashboard")
+    public String managerDashboard() { return "manager-dashboard"; }
+
+    @GetMapping("/front-office")
+    public String frontOfficeDashboard() { return "front-office"; }
+
+    @GetMapping("/room-service")
+    public String roomServiceDashboard() { return "room-service"; }
+
+    @GetMapping("/chef-dashboard")
+    public String chefDashboard() { return "chef-dashboard"; }
+
+    @GetMapping("/client-portal")
+    public String clientPortal() { return "client-portal"; }
 }

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Control — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2/lib/stomp.min.js"></script>
+  <style>
+    /* ── Emergency-specific overrides ────────────────────────── */
+    .emergency-banner {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 24px rgba(239,68,68,0.5);
+      animation: flashBanner 1.2s ease-in-out infinite alternate;
+    }
+    .emergency-banner.hidden { display: none !important; }
+    @keyframes flashBanner {
+      from { opacity: 1; }
+      to   { opacity: 0.85; box-shadow: 0 4px 40px rgba(239,68,68,0.8); }
+    }
+    .emergency-banner .banner-icon { font-size: 28px; }
+    .emergency-banner .banner-text h2 { font-size: 16px; font-weight: 800; color: #fff; margin: 0; }
+    .emergency-banner .banner-text p  { font-size: 12px; color: rgba(255,255,255,0.85); margin: 0; }
+
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .type-card {
+      padding: 20px;
+      border-radius: var(--r-lg);
+      border: 2px solid transparent;
+      background: var(--bg-card);
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--t-normal);
+    }
+    .type-card:hover { transform: translateY(-2px); }
+    .type-card.fire     { border-color: rgba(239,68,68,0.35);   background: rgba(239,68,68,0.06); }
+    .type-card.security { border-color: rgba(245,158,11,0.35);  background: rgba(245,158,11,0.06); }
+    .type-card.medical  { border-color: rgba(16,185,129,0.35);  background: rgba(16,185,129,0.06); }
+    .type-card.drill    { border-color: rgba(99,102,241,0.35);  background: rgba(99,102,241,0.06); }
+    .type-card.active   { transform: scale(1.04); box-shadow: 0 0 0 3px currentColor; }
+    .type-icon { font-size: 36px; margin-bottom: 8px; }
+    .type-name { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+    .type-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    .evac-visitor-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: var(--r-md);
+      background: var(--bg-card-2);
+      margin-bottom: 8px;
+      gap: 12px;
+      transition: background var(--t-fast);
+    }
+    .evac-visitor-row.safe  { border-left: 3px solid var(--success); }
+    .evac-visitor-row.missing { border-left: 3px solid var(--danger); }
+    .evac-visitor-row.unknown { border-left: 3px solid var(--warning); }
+
+    .route-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--bg-card-2);
+      border-radius: var(--r-md);
+      border-left: 3px solid var(--primary);
+      margin-bottom: 8px;
+    }
+    .route-floor { font-size: 11px; font-weight: 700; color: var(--primary-light); min-width: 28px; }
+    .route-desc  { font-size: 12px; color: var(--text-secondary); flex: 1; }
+
+    .severity-btn {
+      padding: 8px 16px;
+      border-radius: var(--r-md);
+      border: 2px solid transparent;
+      background: var(--bg-card-2);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all var(--t-fast);
+    }
+    .severity-btn.active-sev { color: white; }
+    .severity-btn[data-sev="CRITICAL"].active-sev { background:#ef4444; border-color:#ef4444; }
+    .severity-btn[data-sev="HIGH"].active-sev     { background:#f97316; border-color:#f97316; }
+    .severity-btn[data-sev="MEDIUM"].active-sev   { background:#f59e0b; border-color:#f59e0b; }
+    .severity-btn[data-sev="LOW"].active-sev      { background:#6366f1; border-color:#6366f1; }
+
+    /* Pulse ring for active emergency */
+    .pulse-ring {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pulse-ring::before {
+      content: '';
+      position: absolute;
+      width: 140%;
+      height: 140%;
+      border-radius: 50%;
+      border: 2px solid var(--danger);
+      animation: pulseRing 1.5s ease-out infinite;
+      opacity: 0;
+    }
+    @keyframes pulseRing {
+      0%  { transform: scale(0.85); opacity: 0.7; }
+      100%{ transform: scale(1.4);  opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Live emergency banner (shown when active) -->
+<div id="emergencyBanner" class="emergency-banner hidden">
+  <div class="banner-icon pulse-ring">🚨</div>
+  <div class="banner-text">
+    <h2 id="bannerTitle">EMERGENCY ACTIVE</h2>
+    <p id="bannerDesc">All personnel follow evacuation protocols</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:10px;">
+    <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,0.4);color:#fff;" onclick="scrollToActive()">View Details</button>
+  </div>
+</div>
+
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🏢</div>
+      <div><h2>VRGT System</h2><small>Emergency Control</small></div>
+    </div>
+    <ul class="sidebar-nav">
+      <li><a href="/gate"><span class="nav-icon">🚧</span>Gate Kiosk</a></li>
+      <li><a href="/reception"><span class="nav-icon">🛎</span>Reception</a></li>
+      <li><a href="/tracking"><span class="nav-icon">📍</span>Tracking</a></li>
+      <li><a href="/indoor-map"><span class="nav-icon">🗺</span>Indoor Map</a></li>
+      <li><a href="/rooms"><span class="nav-icon">🚪</span>Meeting Rooms</a></li>
+      <li><a href="/admin"><span class="nav-icon">📊</span>Admin Dashboard</a></li>
+      <li><a href="/notifications"><span class="nav-icon">🔔</span>Notifications</a></li>
+      <li><a href="/emergency" class="active"><span class="nav-icon">🚨</span>Emergency</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div id="activeEmergencyBadge" class="info-box danger hidden" style="margin-bottom:10px;padding:8px 12px;font-size:12px;text-align:center;">
+        🚨 EMERGENCY ACTIVE
+      </div>
+      <button class="btn btn-ghost btn-block" onclick="logout()" style="font-size:13px;">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <h1>🚨 Emergency Control Center</h1>
+      <div class="header-actions">
+        <div id="systemStatus" class="header-chip" style="background:rgba(16,185,129,0.15);color:var(--success);">● System Normal</div>
+        <span class="header-time" id="headerTime"></span>
+        <div class="user-pill">
+          <div class="user-avatar">A</div>
+          <span class="user-name">Admin</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- KPI Row -->
+      <div class="stats-grid mb-4" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div><div class="stat-value" id="kpiActive">0</div><div class="stat-label">Active Emergencies</div></div>
+            <div class="stat-icon">🚨</div>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-row">
+            <div><div class="stat-value" id="kpiTotal">0</div><div class="stat-label">Active Visitors</div></div>
+            <div class="stat-icon">👥</div>
+          </div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-row">
+            <div><div class="stat-value" id="kpiEvacuated">0</div><div class="stat-label">Evacuated</div></div>
+            <div class="stat-icon">✅</div>
+          </div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-row">
+            <div><div class="stat-value" id="kpiMissing">0</div><div class="stat-label">Unaccounted</div></div>
+            <div class="stat-icon">⚠</div>
+          </div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-row">
+            <div><div class="stat-value" id="kpiHistory">0</div><div class="stat-label">Total Events</div></div>
+            <div class="stat-icon">📋</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-4">
+
+        <!-- ── Activate Emergency ─────────────────────────────── -->
+        <div class="card" id="activateCard">
+          <div class="card-header">
+            <h3>⚡ Activate Emergency Protocol</h3>
+          </div>
+
+          <!-- Type selection -->
+          <div class="form-group">
+            <label class="form-label">Emergency Type</label>
+            <div class="type-grid">
+              <div class="type-card fire active" data-type="FIRE" onclick="selectType(this)">
+                <div class="type-icon">🔥</div>
+                <div class="type-name">Fire</div>
+                <div class="type-desc">Building fire alarm</div>
+              </div>
+              <div class="type-card security" data-type="SECURITY" onclick="selectType(this)">
+                <div class="type-icon">🛡</div>
+                <div class="type-name">Security</div>
+                <div class="type-desc">Threat or intrusion</div>
+              </div>
+              <div class="type-card medical" data-type="MEDICAL" onclick="selectType(this)">
+                <div class="type-icon">🏥</div>
+                <div class="type-name">Medical</div>
+                <div class="type-desc">Medical emergency</div>
+              </div>
+              <div class="type-card drill" data-type="DRILL" onclick="selectType(this)">
+                <div class="type-icon">🔔</div>
+                <div class="type-name">Drill</div>
+                <div class="type-desc">Practice evacuation</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Severity -->
+          <div class="form-group">
+            <label class="form-label">Severity Level</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="severity-btn active-sev" data-sev="CRITICAL" onclick="selectSeverity(this)">🔴 Critical</button>
+              <button class="severity-btn" data-sev="HIGH" onclick="selectSeverity(this)">🟠 High</button>
+              <button class="severity-btn" data-sev="MEDIUM" onclick="selectSeverity(this)">🟡 Medium</button>
+              <button class="severity-btn" data-sev="LOW" onclick="selectSeverity(this)">🔵 Low / Drill</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Affected Zones</label>
+            <input type="text" id="affectedZones" class="form-control" placeholder="e.g. Floor 1, Lobby, Server Room">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="emergencyDesc" class="form-control" rows="2" placeholder="Briefly describe the situation…"></textarea>
+          </div>
+
+          <button id="activateBtn" class="btn btn-danger btn-block btn-lg" onclick="activateEmergency()" style="margin-top:4px;">
+            🚨 ACTIVATE EMERGENCY PROTOCOL
+          </button>
+        </div>
+
+        <!-- ── Active Emergencies ─────────────────────────────── -->
+        <div class="card" id="activeCard">
+          <div class="card-header">
+            <h3>🔴 Active Emergencies</h3>
+            <button class="btn btn-outline btn-sm" onclick="refreshAll()">⟳ Refresh</button>
+          </div>
+          <div id="activeEmergenciesList">
+            <div class="empty-state" style="padding:40px 0;">
+              <div class="empty-icon">✅</div>
+              <h3 style="color:var(--success);">System Normal</h3>
+              <p class="text-muted">No active emergencies</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Evacuation Status ─────────────────────────────────── -->
+      <div class="card mb-4" id="evacuationCard">
+        <div class="card-header">
+          <h3>👥 Visitor Evacuation Roll Call</h3>
+          <div class="card-actions">
+            <button class="btn btn-success btn-sm" onclick="markAllEvacuated()">✅ Mark All Safe</button>
+            <button class="btn btn-outline btn-sm" onclick="loadEvacuationStatus()">⟳ Refresh</button>
+          </div>
+        </div>
+        <div id="evacuationList">
+          <div class="loading-state"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-4">
+
+        <!-- ── Evacuation Routes ──────────────────────────────── -->
+        <div class="card">
+          <div class="card-header"><h3>🗺 Evacuation Routes by Floor</h3></div>
+          <div id="routesList"></div>
+          <div style="margin-top:16px;padding:12px 16px;border-radius:var(--r-md);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);">
+            <div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px;">Assembly Point</div>
+            <div style="font-size:13px;color:var(--text-secondary);">📍 North Lawn — Gate 1</div>
+            <div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--text-muted);">Emergency Contacts</div>
+            <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+              <span style="padding:4px 10px;background:rgba(239,68,68,0.1);border-radius:20px;font-size:11px;color:var(--danger);">🚒 Fire: 101</span>
+              <span style="padding:4px 10px;background:rgba(16,185,129,0.1);border-radius:20px;font-size:11px;color:var(--success);">🏥 Medical: 108</span>
+              <span style="padding:4px 10px;background:rgba(99,102,241,0.1);border-radius:20px;font-size:11px;color:var(--primary-light);">🚔 Police: 100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Emergency History ──────────────────────────────── -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Emergency History</h3>
+          </div>
+          <div class="table-wrapper" style="max-height:340px;overflow-y:auto;">
+            <table>
+              <thead>
+                <tr><th>Type</th><th>Severity</th><th>Visitors</th><th>Status</th><th>Time</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="historyBody">
+                <tr><td colspan="6" class="text-center text-muted" style="padding:24px;">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let _selectedType = 'FIRE';
+let _selectedSeverity = 'CRITICAL';
+let _activeEmergencyId = null;
+let _evacuationData = [];
+
+// ── Type & Severity selection ───────────────────────────────
+function selectType(el) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  _selectedType = el.dataset.type;
+}
+function selectSeverity(btn) {
+  document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('active-sev'));
+  btn.classList.add('active-sev');
+  _selectedSeverity = btn.dataset.sev;
+}
+
+// ── Activate emergency ─────────────────────────────────────
+async function activateEmergency() {
+  const btn = document.getElementById('activateBtn');
+  if (!await confirm2('⚠ This will broadcast a live emergency alert to ALL connected dashboards. Proceed?')) return;
+
+  setLoading(btn, 'Activating…');
+  const r = await API.post('/api/emergency/activate', {
+    type: _selectedType,
+    severity: _selectedSeverity,
+    triggeredBy: currentUser().username || 'admin',
+    description: document.getElementById('emergencyDesc').value,
+    affectedZones: document.getElementById('affectedZones').value,
+  });
+  clearLoading(btn);
+
+  if (r.success) {
+    _activeEmergencyId = r.data.id;
+    Toast.error('🚨 Emergency activated — all personnel notified');
+    showBanner(_selectedType, document.getElementById('emergencyDesc').value);
+    refreshAll();
+  } else {
+    Toast.error(r.message || 'Failed to activate emergency');
+  }
+}
+
+// ── Resolve emergency ──────────────────────────────────────
+async function resolveEmergency(id) {
+  if (!await confirm2('Mark this emergency as RESOLVED? All-clear will be broadcast.')) return;
+  const r = await API.post('/api/emergency/' + id + '/resolve', {
+    resolvedBy: currentUser().username || 'admin'
+  });
+  if (r.success) {
+    Toast.success('Emergency resolved — all-clear sent');
+    hideBanner();
+    refreshAll();
+  } else {
+    Toast.error(r.message);
+  }
+}
+
+// ── Mark all visitors as evacuated ───────────────────────
+async function markAllEvacuated() {
+  if (!_activeEmergencyId) {
+    Toast.warning('No active emergency selected');
+    return;
+  }
+  const total = _evacuationData.length;
+  const r = await API.post('/api/emergency/' + _activeEmergencyId + '/evacuation-update', {
+    evacuatedCount: total
+  });
+  if (r.success) {
+    Toast.success('All ' + total + ' visitors marked as evacuated');
+    document.getElementById('kpiEvacuated').textContent = total;
+    document.getElementById('kpiMissing').textContent = '0';
+    loadEvacuationStatus();
+  } else {
+    Toast.error(r.message);
+  }
+}
+
+// ── Load evacuation roll call ─────────────────────────────
+async function loadEvacuationStatus() {
+  const r = await API.get('/api/emergency/status');
+  if (!r.success) { return; }
+  const data = r.data;
+  _evacuationData = data.visitors || [];
+
+  document.getElementById('kpiTotal').textContent = data.totalActive || 0;
+
+  // Evacuation routes
+  const routes = data.evacuationRoutes || {};
+  document.getElementById('routesList').innerHTML = Object.entries(routes).map(([floor, route]) =>
+    `<div class="route-pill">
+       <span class="route-floor">${floor}</span>
+       <span class="route-desc">${route}</span>
+     </div>`
+  ).join('');
+
+  // Visitor list
+  const listEl = document.getElementById('evacuationList');
+  if (!_evacuationData.length) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="empty-icon">👥</div><p class="text-muted">No active visitors in building</p></div>';
+    return;
+  }
+  listEl.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:12px;font-size:12px;flex-wrap:wrap;">
+      <span style="color:var(--success);">✅ Safe: <strong id="safeCount">0</strong></span>
+      <span style="color:var(--danger);">⚠ Missing: <strong id="missingCount">${_evacuationData.length}</strong></span>
+      <span style="color:var(--text-muted);">Total: <strong>${_evacuationData.length}</strong></span>
+    </div>
+    <div style="max-height:300px;overflow-y:auto;" id="visitorRollCall">
+      ${_evacuationData.map(v => `
+        <div class="evac-visitor-row unknown" id="evac_${v.id}">
+          <div style="width:32px;height:32px;border-radius:50%;background:${avatarColor(v.name)};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;">${initials(v.name)}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:13px;">${v.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${v.company||''} • Room: ${v.assignedRoom||'—'} • Host: ${v.hostName}</div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);">📱 ${v.phone}</div>
+          <button class="btn btn-success btn-sm" style="font-size:11px;" onclick="markSafe(${v.id})">✅ Safe</button>
+          <span id="evac_status_${v.id}" style="font-size:11px;color:var(--warning);">Unaccounted</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+let _safeCount = 0;
+function markSafe(visitorId) {
+  const row = document.getElementById('evac_' + visitorId);
+  const status = document.getElementById('evac_status_' + visitorId);
+  if (row) { row.classList.remove('unknown','missing'); row.classList.add('safe'); }
+  if (status) { status.textContent = '✅ Evacuated'; status.style.color = 'var(--success)'; }
+  _safeCount++;
+  const safeEl = document.getElementById('safeCount');
+  const missEl = document.getElementById('missingCount');
+  if (safeEl) safeEl.textContent = _safeCount;
+  if (missEl) missEl.textContent = Math.max(0, _evacuationData.length - _safeCount);
+  document.getElementById('kpiEvacuated').textContent = _safeCount;
+  document.getElementById('kpiMissing').textContent = Math.max(0, _evacuationData.length - _safeCount);
+  // Persist to backend if an active emergency exists
+  if (_activeEmergencyId) {
+    API.post('/api/emergency/' + _activeEmergencyId + '/evacuation-update', { evacuatedCount: _safeCount });
+  }
+}
+
+// ── Load active emergencies ────────────────────────────────
+async function loadActiveEmergencies() {
+  const r = await API.get('/api/emergency/active');
+  const container = document.getElementById('activeEmergenciesList');
+  const badge = document.getElementById('activeEmergencyBadge');
+  const sysStatus = document.getElementById('systemStatus');
+
+  if (!r.success || !r.data?.length) {
+    container.innerHTML = `<div class="empty-state" style="padding:40px 0;">
+      <div class="empty-icon">✅</div>
+      <h3 style="color:var(--success);">System Normal</h3>
+      <p class="text-muted">No active emergencies</p>
+    </div>`;
+    badge.classList.add('hidden');
+    document.getElementById('kpiActive').textContent = '0';
+    sysStatus.style.color = 'var(--success)';
+    sysStatus.style.background = 'rgba(16,185,129,0.15)';
+    sysStatus.textContent = '● System Normal';
+    return;
+  }
+
+  document.getElementById('kpiActive').textContent = r.data.length;
+  badge.classList.remove('hidden');
+  sysStatus.style.color = 'var(--danger)';
+  sysStatus.style.background = 'rgba(239,68,68,0.15)';
+  sysStatus.textContent = '🚨 EMERGENCY ACTIVE';
+
+  _activeEmergencyId = r.data[0].id;
+
+  const typeColors = { FIRE:'danger', SECURITY:'warning', MEDICAL:'success', EVACUATION:'info', DRILL:'primary' };
+  const typeIcons  = { FIRE:'🔥', SECURITY:'🛡', MEDICAL:'🏥', EVACUATION:'🚪', DRILL:'🔔' };
+
+  container.innerHTML = r.data.map(e => {
+    const color = typeColors[e.emergencyType] || 'danger';
+    const icon  = typeIcons[e.emergencyType]  || '🚨';
+    const elapsed = Math.floor((Date.now() - new Date(e.triggeredAt)) / 60000);
+    return `
+      <div style="padding:16px;border-radius:var(--r-lg);background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:28px;">${icon}</span>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:15px;color:var(--danger);">${e.emergencyType}</div>
+            <div style="font-size:11px;color:var(--text-muted);">Severity: ${e.severity} • ${elapsed}m ago • ${e.totalVisitors} visitors</div>
+          </div>
+          <span style="padding:4px 10px;background:rgba(239,68,68,0.2);border-radius:20px;font-size:11px;color:var(--danger);font-weight:700;">ACTIVE</span>
+        </div>
+        ${e.description ? `<p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${e.description}</p>` : ''}
+        ${e.affectedZones ? `<p style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Zones: ${e.affectedZones}</p>` : ''}
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(16,185,129,0.1);border-radius:var(--r-sm);">
+            <div style="font-size:18px;font-weight:800;color:var(--success);">${e.evacuatedCount}</div>
+            <div style="font-size:10px;color:var(--text-muted);">Evacuated</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(239,68,68,0.1);border-radius:var(--r-sm);">
+            <div style="font-size:18px;font-weight:800;color:var(--danger);">${e.missingCount}</div>
+            <div style="font-size:10px;color:var(--text-muted);">Missing</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(99,102,241,0.1);border-radius:var(--r-sm);">
+            <div style="font-size:18px;font-weight:800;color:var(--primary-light);">${e.totalVisitors}</div>
+            <div style="font-size:10px;color:var(--text-muted);">Total</div>
+          </div>
+        </div>
+        <button class="btn btn-success btn-block btn-sm" style="margin-top:12px;" onclick="resolveEmergency(${e.id})">✅ Mark Resolved / All Clear</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Load history ───────────────────────────────────────────
+async function loadHistory() {
+  const r = await API.get('/api/emergency/history');
+  const tbody = document.getElementById('historyBody');
+  if (!r.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:24px;">No emergency history</td></tr>';
+    document.getElementById('kpiHistory').textContent = '0';
+    return;
+  }
+  document.getElementById('kpiHistory').textContent = r.data.length;
+  const sevColors = { CRITICAL:'danger', HIGH:'warning', MEDIUM:'accent', LOW:'info' };
+  const icons = { FIRE:'🔥', SECURITY:'🛡', MEDICAL:'🏥', EVACUATION:'🚪', DRILL:'🔔' };
+  tbody.innerHTML = r.data.map(e => `
+    <tr>
+      <td><span style="font-size:16px;">${icons[e.emergencyType]||'🚨'}</span> <strong>${e.emergencyType}</strong></td>
+      <td><span class="badge ${sevColors[e.severity]||'danger'}-solid" style="font-size:10px;">${e.severity}</span></td>
+      <td>${e.totalVisitors}</td>
+      <td>${e.status === 'RESOLVED'
+        ? '<span class="badge at-gate" style="background:rgba(16,185,129,0.15);color:var(--success);">RESOLVED</span>'
+        : '<span class="badge danger-solid">ACTIVE</span>'}</td>
+      <td class="td-muted mono">${timeAgo(e.triggeredAt)}</td>
+      <td>${e.status === 'ACTIVE' ? `<button class="btn btn-success btn-sm" onclick="resolveEmergency(${e.id})">Resolve</button>` : `<span class="text-muted text-sm">${e.resolvedBy||'—'}</span>`}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Banner helpers ─────────────────────────────────────────
+function showBanner(type, desc) {
+  const banner = document.getElementById('emergencyBanner');
+  document.getElementById('bannerTitle').textContent = '🚨 ' + type + ' EMERGENCY ACTIVE';
+  document.getElementById('bannerDesc').textContent   = desc || 'Evacuate immediately via nearest exit';
+  banner.classList.remove('hidden');
+}
+function hideBanner() {
+  document.getElementById('emergencyBanner').classList.add('hidden');
+}
+function scrollToActive() {
+  document.getElementById('activeCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── WebSocket handler for incoming emergency alerts ────────
+function onEmergencyAlert(data) {
+  if (data.type === 'EMERGENCY') {
+    showBanner(data.emergencyType, data.description);
+    Toast.error('🚨 EMERGENCY: ' + data.emergencyType + ' — ' + (data.description || ''));
+    refreshAll();
+  } else if (data.type === 'EMERGENCY_RESOLVED') {
+    hideBanner();
+    Toast.success('✅ Emergency resolved by ' + data.resolvedBy);
+    refreshAll();
+  }
+}
+
+async function refreshAll() {
+  await loadActiveEmergencies();
+  await loadEvacuationStatus();
+  await loadHistory();
+}
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll();
+  setInterval(refreshAll, 15000);
+
+  // Subscribe to emergency WebSocket topic
+  const origConnect = connectWebSocket;
+  connectWebSocket = function() {
+    origConnect();
+    setTimeout(() => {
+      if (_stompClient && _stompClient.connected) {
+        _stompClient.subscribe('/topic/emergency', m => onEmergencyAlert(JSON.parse(m.body)));
+      }
+    }, 1000);
+  };
+  connectWebSocket();
+});
+</script>
+</body>
+</html>

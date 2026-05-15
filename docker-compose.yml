@@ -1,0 +1,102 @@
+version: '3.9'
+
+# ============================================================
+#  Smart Hotel Visitor Route Guidance & Real-Time Tracking
+#  Docker Compose — Full Stack
+#
+#  Usage:
+#    docker compose up -d           # start all services
+#    docker compose logs -f app     # follow app logs
+#    docker compose down -v         # stop + remove volumes
+# ============================================================
+
+services:
+
+  # ── MySQL 8 ───────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: vrgt_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-RootSecure@2024}
+      MYSQL_DATABASE:      ${MYSQL_DB:-vrgt_db}
+      MYSQL_USER:          ${MYSQL_USER:-vrgt_user}
+      MYSQL_PASSWORD:      ${MYSQL_PASSWORD:-VrgtSecure@2024}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone='+05:30'
+      --max-connections=200
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-RootSecure@2024}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - vrgt_net
+
+  # ── Spring Boot App ───────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vrgt_app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      MYSQL_HOST:     mysql
+      MYSQL_PORT:     3306
+      MYSQL_DB:       ${MYSQL_DB:-vrgt_db}
+      MYSQL_USER:     ${MYSQL_USER:-vrgt_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-VrgtSecure@2024}
+      # JWT
+      APP_JWT_SECRET:     ${JWT_SECRET:-VRGTSystemSecretKeyForJWTTokenGenerationAndValidation2024SecureKey256Bit!}
+      APP_JWT_EXPIRATION: 86400000
+      # QR encryption
+      APP_QR_AES_KEY: ${QR_AES_KEY:-VRGT2024AES256KY}
+      # MSG91
+      MSG91_API_KEY: ${MSG91_API_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q 'UP' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - vrgt_net
+
+  # ── Nginx Reverse Proxy (optional, production) ────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: vrgt_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - vrgt_net
+    profiles:
+      - production   # only starts with: docker compose --profile production up
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  vrgt_net:
+    driver: bridge

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Service — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">🛏</div>
+        <div>
+          <div class="sidebar-logo-title">Room Service</div>
+          <div class="sidebar-logo-sub">Housekeeping Hub</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('tasks')">
+        <span class="nav-icon">📋</span><span>Task Queue</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('rooms')">
+        <span class="nav-icon">🏨</span><span>Room Status</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('inventory')">
+        <span class="nav-icon">📦</span><span>Inventory</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('history')">
+        <span class="nav-icon">📊</span><span>Today's History</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-avatar">🛏</div>
+        <div>
+          <div class="sidebar-user-name">Loading…</div>
+          <div class="sidebar-user-role">Room Service</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-block" onclick="logout()" style="margin-top:8px;">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="topbar">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">Room Service Dashboard</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="currentDate">Loading…</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="live-dot"></div>
+        <span style="font-size:12px;color:var(--text-muted);">Live Updates</span>
+        <div class="header-chip" id="shiftChip">Morning Shift</div>
+      </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:24px;">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(239,68,68,0.15);">🔴</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiPending">0</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(245,158,11,0.15);">🟡</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiInProgress">0</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(16,185,129,0.15);">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiDone">0</div>
+          <div class="stat-label">Completed Today</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(99,102,241,0.15);">⏱</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiAvgTime">—</div>
+          <div class="stat-label">Avg Completion</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(20,184,166,0.15);">🏨</div>
+        <div class="stat-info">
+          <div class="stat-value" id="kpiDirtyRooms">0</div>
+          <div class="stat-label">Rooms to Clean</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Task Queue ── -->
+    <div id="section-tasks">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);">Task Queue</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-control" style="width:160px;padding:6px 10px;font-size:13px;" id="taskFilter" onchange="filterTasks()">
+            <option value="ALL">All Tasks</option>
+            <option value="PENDING">Pending</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+          <select class="form-control" style="width:160px;padding:6px 10px;font-size:13px;" id="typeFilter" onchange="filterTasks()">
+            <option value="ALL">All Types</option>
+            <option value="HOUSEKEEPING">Housekeeping</option>
+            <option value="ROOM_SERVICE">Room Service</option>
+            <option value="MAINTENANCE">Maintenance</option>
+            <option value="TURNDOWN">Turndown</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="loadTasks()">↻ Refresh</button>
+        </div>
+      </div>
+
+      <div id="taskList" style="display:grid;gap:12px;">
+        <!-- Tasks loaded here -->
+      </div>
+
+    </div>
+
+    <!-- ── SECTION: Room Status Grid ── -->
+    <div id="section-rooms" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Room Status Map</div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <span class="badge" style="background:rgba(16,185,129,0.15);color:var(--success);">● Available</span>
+        <span class="badge" style="background:rgba(99,102,241,0.15);color:#818cf8;">● Occupied</span>
+        <span class="badge warning">● Checkout — Needs Clean</span>
+        <span class="badge" style="background:rgba(245,158,11,0.15);color:var(--warning);">● Cleaning In Progress</span>
+        <span class="badge" style="background:rgba(239,68,68,0.15);color:var(--danger);">● Maintenance</span>
+      </div>
+
+      <div id="roomGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">
+        <!-- Room tiles loaded here -->
+      </div>
+    </div>
+
+    <!-- ── SECTION: Inventory ── -->
+    <div id="section-inventory" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Inventory & Supplies</div>
+      <div id="inventoryGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
+    </div>
+
+    <!-- ── SECTION: History ── -->
+    <div id="section-history" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Today's Completed Tasks</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Room</th><th>Type</th><th>Assigned To</th><th>Started</th><th>Completed</th><th>Duration</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">Loading history…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Task Detail Modal -->
+<div class="modal-overlay hidden" id="taskModal">
+  <div class="modal" style="width:480px;">
+    <div class="modal-header">
+      <div class="modal-title" id="taskModalTitle">Task Details</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('taskModal')">✕</button>
+    </div>
+    <div class="modal-body" id="taskModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('taskModal')">Close</button>
+      <button class="btn btn-warning" id="btnStartTask" onclick="startTask()" style="display:none;">▶ Start Task</button>
+      <button class="btn btn-success" id="btnCompleteTask" onclick="completeTask()" style="display:none;">✔ Mark Complete</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+/* ── Auth guard ── */
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user || !['ROOM_SERVICE','MANAGER','ADMIN','FOUNDER'].includes(user.role)) {
+  window.location.href = '/login';
+}
+
+let allTasks = [];
+let activeTaskId = null;
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', () => {
+  const u = document.getElementById('sidebarUser');
+  if (u && user) u.querySelector('.sidebar-user-name').textContent = user.username || user.name || 'Staff';
+
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const h = now.getHours();
+  const shift = h < 12 ? 'Morning Shift' : h < 17 ? 'Afternoon Shift' : 'Evening Shift';
+  document.getElementById('shiftChip').textContent = shift;
+
+  loadTasks();
+  loadRooms();
+  loadInventory();
+  loadHistory();
+  connectWS();
+});
+
+/* ── Section nav ── */
+function showSection(name) {
+  ['tasks','rooms','inventory','history'].forEach(s => {
+    document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', i === ['tasks','rooms','inventory','history'].indexOf(name));
+  });
+}
+
+/* ── Load Tasks ── */
+async function loadTasks() {
+  const res = await API.get('/api/room-service/tasks');
+  if (res.success) {
+    allTasks = res.data || [];
+  } else {
+    allTasks = generateMockTasks();
+  }
+  updateKPIs();
+  filterTasks();
+}
+
+function generateMockTasks() {
+  const types = ['HOUSEKEEPING','ROOM_SERVICE','MAINTENANCE','TURNDOWN'];
+  const statuses = ['PENDING','PENDING','IN_PROGRESS','COMPLETED'];
+  const notes = [
+    'Deep clean requested by guest',
+    'Extra towels and toiletries needed',
+    'AC not cooling properly — check filter',
+    'Turndown service with chocolates',
+    'Full linen change after late checkout',
+    'Mini-bar restock required',
+    'Plumbing issue in bathroom',
+    'Evening turndown service',
+  ];
+  return Array.from({ length: 12 }, (_, i) => ({
+    id: i + 1,
+    roomNumber: `${Math.floor(i / 3) + 1}0${(i % 8) + 1}`,
+    floor: Math.floor(i / 3) + 1,
+    type: types[i % 4],
+    status: statuses[i % 4],
+    priority: i % 3 === 0 ? 'HIGH' : i % 3 === 1 ? 'MEDIUM' : 'LOW',
+    notes: notes[i % notes.length],
+    assignedTo: i % 2 === 0 ? (user?.username || 'You') : 'Priya K.',
+    createdAt: new Date(Date.now() - (i * 18 + 5) * 60000).toISOString(),
+    startedAt: statuses[i % 4] !== 'PENDING' ? new Date(Date.now() - (i * 12) * 60000).toISOString() : null,
+    completedAt: statuses[i % 4] === 'COMPLETED' ? new Date(Date.now() - (i * 6) * 60000).toISOString() : null,
+  }));
+}
+
+function updateKPIs() {
+  const pending    = allTasks.filter(t => t.status === 'PENDING').length;
+  const inProgress = allTasks.filter(t => t.status === 'IN_PROGRESS').length;
+  const done       = allTasks.filter(t => t.status === 'COMPLETED').length;
+  document.getElementById('kpiPending').textContent    = pending;
+  document.getElementById('kpiInProgress').textContent = inProgress;
+  document.getElementById('kpiDone').textContent        = done;
+
+  const completed = allTasks.filter(t => t.completedAt && t.startedAt);
+  if (completed.length) {
+    const avgMs = completed.reduce((sum, t) => {
+      return sum + (new Date(t.completedAt) - new Date(t.startedAt));
+    }, 0) / completed.length;
+    document.getElementById('kpiAvgTime').textContent = Math.round(avgMs / 60000) + ' min';
+  }
+
+  const dirty = allTasks.filter(t => t.type === 'HOUSEKEEPING' && t.status !== 'COMPLETED').length;
+  document.getElementById('kpiDirtyRooms').textContent = dirty;
+}
+
+function filterTasks() {
+  const sf = document.getElementById('taskFilter').value;
+  const tf = document.getElementById('typeFilter').value;
+  const filtered = allTasks.filter(t =>
+    (sf === 'ALL' || t.status === sf) &&
+    (tf === 'ALL' || t.type === tf)
+  );
+  renderTasks(filtered);
+}
+
+function renderTasks(tasks) {
+  const container = document.getElementById('taskList');
+  if (!tasks.length) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--text-muted);padding:40px;">No tasks match the current filter.</div>';
+    return;
+  }
+
+  const priorityColor = { HIGH: 'var(--danger)', MEDIUM: 'var(--warning)', LOW: 'var(--success)' };
+  const statusBadge = {
+    PENDING:     '<span class="badge danger">Pending</span>',
+    IN_PROGRESS: '<span class="badge warning">In Progress</span>',
+    COMPLETED:   '<span class="badge success">Completed</span>',
+  };
+  const typeIcon = { HOUSEKEEPING: '🧹', ROOM_SERVICE: '🍽', MAINTENANCE: '🔧', TURNDOWN: '🌙' };
+
+  container.innerHTML = tasks.map(t => `
+    <div class="card" style="cursor:pointer;border-left:3px solid ${priorityColor[t.priority] || 'var(--border)'};"
+         onclick="openTask(${t.id})">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;flex:1;">
+          <div style="font-size:28px;">${typeIcon[t.type] || '📋'}</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-weight:700;font-size:15px;color:var(--text-primary);">Room ${t.roomNumber}</span>
+              <span style="font-size:11px;color:var(--text-muted);">Floor ${t.floor}</span>
+              ${statusBadge[t.status] || ''}
+              <span class="badge" style="background:${priorityColor[t.priority]}22;color:${priorityColor[t.priority]};font-size:10px;">${t.priority}</span>
+            </div>
+            <div style="font-size:13px;color:var(--text-muted);">${t.type.replace('_',' ')} · ${t.notes}</div>
+          </div>
+        </div>
+        <div style="text-align:right;min-width:100px;">
+          <div style="font-size:12px;color:var(--text-muted);">Assigned to</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-secondary);">${t.assignedTo || '—'}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${timeAgo(t.createdAt)}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Task modal ── */
+function openTask(id) {
+  const t = allTasks.find(x => x.id === id);
+  if (!t) return;
+  activeTaskId = id;
+
+  const priorityColor = { HIGH: 'var(--danger)', MEDIUM: 'var(--warning)', LOW: 'var(--success)' };
+  const typeIcon = { HOUSEKEEPING: '🧹', ROOM_SERVICE: '🍽', MAINTENANCE: '🔧', TURNDOWN: '🌙' };
+
+  document.getElementById('taskModalTitle').textContent = `Room ${t.roomNumber} — ${t.type.replace('_',' ')}`;
+  document.getElementById('taskModalBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="info-box">
+        <div style="font-size:11px;color:var(--text-muted);">Room / Floor</div>
+        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${t.roomNumber}</div>
+        <div style="font-size:12px;color:var(--text-muted);">Floor ${t.floor}</div>
+      </div>
+      <div class="info-box">
+        <div style="font-size:11px;color:var(--text-muted);">Priority</div>
+        <div style="font-size:18px;font-weight:700;color:${priorityColor[t.priority]};">${t.priority}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${t.status.replace('_',' ')}</div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Task Notes</div>
+      <div class="info-box">${t.notes}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);">Assigned To</div>
+        <div style="font-weight:600;color:var(--text-primary);">${t.assignedTo || '—'}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text-muted);">Created</div>
+        <div style="font-weight:600;color:var(--text-primary);">${formatTime(t.createdAt)}</div>
+      </div>
+    </div>
+    ${t.startedAt ? `<div style="margin-top:12px;font-size:12px;color:var(--text-muted);">Started: <strong>${formatTime(t.startedAt)}</strong></div>` : ''}
+    ${t.completedAt ? `<div style="font-size:12px;color:var(--success);">Completed: <strong>${formatTime(t.completedAt)}</strong></div>` : ''}
+  `;
+
+  document.getElementById('btnStartTask').style.display    = t.status === 'PENDING'     ? '' : 'none';
+  document.getElementById('btnCompleteTask').style.display = t.status === 'IN_PROGRESS' ? '' : 'none';
+  document.getElementById('taskModal').classList.remove('hidden');
+}
+
+async function startTask() {
+  const t = allTasks.find(x => x.id === activeTaskId);
+  if (!t) return;
+  const res = await API.post(`/api/room-service/tasks/${activeTaskId}/start`, {});
+  if (res.success) {
+    t.status = 'IN_PROGRESS';
+    t.startedAt = new Date().toISOString();
+  } else {
+    t.status = 'IN_PROGRESS';
+    t.startedAt = new Date().toISOString();
+    showToast('Task started (offline mode)');
+  }
+  closeModal('taskModal');
+  updateKPIs();
+  filterTasks();
+}
+
+async function completeTask() {
+  const t = allTasks.find(x => x.id === activeTaskId);
+  if (!t) return;
+  const res = await API.post(`/api/room-service/tasks/${activeTaskId}/complete`, {});
+  if (res.success) {
+    t.status = 'COMPLETED';
+    t.completedAt = new Date().toISOString();
+  } else {
+    t.status = 'COMPLETED';
+    t.completedAt = new Date().toISOString();
+    showToast('Task completed (offline mode)');
+  }
+  closeModal('taskModal');
+  updateKPIs();
+  filterTasks();
+  loadRooms();
+}
+
+/* ── Room Status ── */
+async function loadRooms() {
+  const res = await API.get('/api/rooms/status');
+  let rooms;
+  if (res.success && res.data) {
+    rooms = res.data;
+  } else {
+    rooms = generateMockRooms();
+  }
+  renderRooms(rooms);
+}
+
+function generateMockRooms() {
+  const statuses = ['AVAILABLE','OCCUPIED','CHECKOUT','CLEANING','MAINTENANCE'];
+  return Array.from({ length: 36 }, (_, i) => {
+    const floor = Math.floor(i / 12) + 1;
+    const num = (i % 12) + 1;
+    const roomNum = `${floor}0${num < 10 ? '0' + num : num}`;
+    return { roomNumber: roomNum, floor, status: statuses[i % 5] };
+  });
+}
+
+function renderRooms(rooms) {
+  const colors = {
+    AVAILABLE:   { bg: 'rgba(16,185,129,0.15)', border: 'var(--success)',  text: 'var(--success)' },
+    OCCUPIED:    { bg: 'rgba(99,102,241,0.15)', border: '#818cf8',         text: '#818cf8' },
+    CHECKOUT:    { bg: 'rgba(245,158,11,0.15)', border: 'var(--warning)',  text: 'var(--warning)' },
+    CLEANING:    { bg: 'rgba(20,184,166,0.15)', border: 'var(--info)',     text: 'var(--info)' },
+    MAINTENANCE: { bg: 'rgba(239,68,68,0.15)', border: 'var(--danger)',   text: 'var(--danger)' },
+  };
+  document.getElementById('roomGrid').innerHTML = rooms.map(r => {
+    const c = colors[r.status] || colors.AVAILABLE;
+    return `
+      <div style="background:${c.bg};border:1px solid ${c.border};border-radius:8px;padding:10px 6px;
+                  text-align:center;cursor:pointer;" title="${r.status}">
+        <div style="font-size:14px;font-weight:700;color:${c.text};">${r.roomNumber}</div>
+        <div style="font-size:9px;color:var(--text-muted);margin-top:2px;">${r.status.replace('_',' ')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ── Inventory ── */
+function loadInventory() {
+  const items = [
+    { name: 'Bath Towels',    icon: '🛁', qty: 142, min: 50, unit: 'pcs' },
+    { name: 'Hand Towels',    icon: '🤲', qty: 98,  min: 40, unit: 'pcs' },
+    { name: 'Bed Sheets',     icon: '🛏', qty: 76,  min: 30, unit: 'sets' },
+    { name: 'Pillowcases',    icon: '🛌', qty: 54,  min: 25, unit: 'pcs' },
+    { name: 'Shampoo',        icon: '🧴', qty: 220, min: 80, unit: 'bottles' },
+    { name: 'Conditioner',    icon: '🧴', qty: 185, min: 60, unit: 'bottles' },
+    { name: 'Soap Bars',      icon: '🧼', qty: 310, min: 100, unit: 'pcs' },
+    { name: 'Toilet Paper',   icon: '🧻', qty: 180, min: 80, unit: 'rolls' },
+    { name: 'Mineral Water',  icon: '💧', qty: 95,  min: 50, unit: 'bottles' },
+    { name: 'Coffee Pods',    icon: '☕', qty: 48,  min: 30, unit: 'pods' },
+    { name: 'Tea Bags',       icon: '🍵', qty: 120, min: 50, unit: 'bags' },
+    { name: 'Chocolates',     icon: '🍫', qty: 32,  min: 20, unit: 'pcs' },
+  ];
+
+  document.getElementById('inventoryGrid').innerHTML = items.map(item => {
+    const pct = Math.min(100, (item.qty / (item.min * 3)) * 100);
+    const low = item.qty < item.min * 1.3;
+    return `
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:24px;">${item.icon}</span>
+          <div>
+            <div style="font-weight:700;color:var(--text-primary);font-size:14px;">${item.name}</div>
+            <div style="font-size:12px;color:${low ? 'var(--warning)' : 'var(--text-muted)'};">
+              ${item.qty} ${item.unit} ${low ? '⚠ Low Stock' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${low ? 'var(--warning)' : 'var(--success)'};border-radius:2px;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Min: ${item.min} ${item.unit}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ── History ── */
+async function loadHistory() {
+  const completed = allTasks.length
+    ? allTasks.filter(t => t.status === 'COMPLETED')
+    : generateMockTasks().filter(t => t.status === 'COMPLETED');
+
+  if (!completed.length) {
+    document.getElementById('historyBody').innerHTML =
+      '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No completed tasks yet today</td></tr>';
+    return;
+  }
+
+  document.getElementById('historyBody').innerHTML = completed.map(t => {
+    let duration = '—';
+    if (t.startedAt && t.completedAt) {
+      const mins = Math.round((new Date(t.completedAt) - new Date(t.startedAt)) / 60000);
+      duration = mins + ' min';
+    }
+    return `<tr>
+      <td><strong>${t.roomNumber}</strong></td>
+      <td>${t.type.replace('_',' ')}</td>
+      <td>${t.assignedTo || '—'}</td>
+      <td>${t.startedAt ? formatTime(t.startedAt) : '—'}</td>
+      <td>${t.completedAt ? formatTime(t.completedAt) : '—'}</td>
+      <td>${duration}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── WebSocket ── */
+function connectWS() {
+  try {
+    const sock = new SockJS('/ws');
+    const client = Stomp.over(sock);
+    client.debug = null;
+    client.connect({}, () => {
+      client.subscribe('/topic/room-service', msg => {
+        const evt = JSON.parse(msg.body);
+        if (evt.type === 'TASK_UPDATED' || evt.type === 'NEW_TASK') {
+          loadTasks();
+          showToast(evt.message || 'Task queue updated');
+        }
+      });
+    });
+  } catch (e) { /* WS optional */ }
+}
+
+/* ── Helpers ── */
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso);
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm ago';
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface-2);border:1px solid var(--border);' +
+    'color:var(--text-primary);padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>

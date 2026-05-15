@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guest Portal — VRGT System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">🧳</div>
+        <div>
+          <div class="sidebar-logo-title">Guest Portal</div>
+          <div class="sidebar-logo-sub">Your Stay Dashboard</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" onclick="showSection('stay')">
+        <span class="nav-icon">🏨</span><span>My Stay</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('qr')">
+        <span class="nav-icon">🔐</span><span>My QR Pass</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('orders')">
+        <span class="nav-icon">🍽</span><span>Room Service</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('requests')">
+        <span class="nav-icon">🛎</span><span>Requests</span>
+      </a>
+      <a href="#" class="nav-item" onclick="showSection('feedback')">
+        <span class="nav-icon">⭐</span><span>Feedback</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">🧳</div>
+        <div>
+          <div class="sidebar-user-name" id="guestName">Loading…</div>
+          <div class="sidebar-user-role">Guest</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-block" onclick="logout()" style="margin-top:8px;">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="topbar">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">Welcome back, <span id="headerGuestName">Guest</span> 👋</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="currentDate">Loading…</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="header-chip" id="checkoutChip">Check-out: —</div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: My Stay ── -->
+    <div id="section-stay">
+
+      <!-- Stay Summary Card -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;">
+        <div class="card card-active-glow">
+          <div style="display:flex;align-items:flex-start;gap:20px;">
+            <div style="font-size:48px;">🏨</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">Your Room</div>
+              <div style="font-size:36px;font-weight:900;color:var(--text-primary);" id="stayRoom">—</div>
+              <div style="font-size:13px;color:var(--text-muted);" id="stayRoomType">Standard Room</div>
+              <div style="display:flex;gap:16px;margin-top:12px;">
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted);">Check-in</div>
+                  <div style="font-weight:700;color:var(--text-primary);" id="stayCheckin">—</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted);">Check-out</div>
+                  <div style="font-weight:700;color:var(--text-primary);" id="stayCheckout">—</div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-muted);">Nights</div>
+                  <div style="font-weight:700;color:var(--primary-light);" id="stayNights">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:12px;">
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:var(--text-muted);">Floor</div>
+            <div style="font-size:24px;font-weight:700;color:var(--text-primary);" id="stayFloor">—</div>
+          </div>
+          <div class="card" style="padding:16px;">
+            <div style="font-size:12px;color:var(--text-muted);">Wi-Fi Password</div>
+            <div style="font-size:18px;font-weight:700;color:var(--primary-light);" id="wifiPwd">VRGT@2024</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:12px;">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+        <div class="card" style="text-align:center;cursor:pointer;padding:20px;" onclick="showSection('orders')">
+          <div style="font-size:32px;margin-bottom:8px;">🍽</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);">Order Food</div>
+          <div style="font-size:11px;color:var(--text-muted);">Room service menu</div>
+        </div>
+        <div class="card" style="text-align:center;cursor:pointer;padding:20px;" onclick="openHousekeepingRequest()">
+          <div style="font-size:32px;margin-bottom:8px;">🧹</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);">Housekeeping</div>
+          <div style="font-size:11px;color:var(--text-muted);">Request cleaning</div>
+        </div>
+        <div class="card" style="text-align:center;cursor:pointer;padding:20px;" onclick="showSection('qr')">
+          <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);">QR Pass</div>
+          <div style="font-size:11px;color:var(--text-muted);">Your entry pass</div>
+        </div>
+        <div class="card" style="text-align:center;cursor:pointer;padding:20px;" onclick="showSection('feedback')">
+          <div style="font-size:32px;margin-bottom:8px;">⭐</div>
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);">Feedback</div>
+          <div style="font-size:11px;color:var(--text-muted);">Rate your stay</div>
+        </div>
+      </div>
+
+      <!-- Active Orders Summary -->
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:12px;">Active Orders & Requests</div>
+      <div id="activeItemsList">
+        <div class="card" style="color:var(--text-muted);text-align:center;padding:24px;">
+          No active orders or requests right now.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: QR Pass ── -->
+    <div id="section-qr" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">My QR Entry Pass</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px;">
+        <div class="card" style="text-align:center;padding:32px;">
+          <div id="qrCodeContainer" style="width:200px;height:200px;margin:0 auto 16px;
+               background:white;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <div style="color:#666;font-size:13px;">Loading QR…</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Scan at gate entry / exit</div>
+          <div style="font-size:11px;color:var(--danger);" id="qrExpiry">Expires: —</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="regenerateQR()">🔄 Regenerate</button>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:12px;">Pass Details</div>
+            <div style="display:grid;gap:8px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-muted);font-size:13px;">Guest Name</span>
+                <span style="font-weight:600;" id="passGuestName">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-muted);font-size:13px;">Room</span>
+                <span style="font-weight:600;" id="passRoom">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-muted);font-size:13px;">Valid Until</span>
+                <span style="font-weight:600;color:var(--success);" id="passValidUntil">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="color:var(--text-muted);font-size:13px;">Encryption</span>
+                <span style="font-weight:600;color:var(--primary-light);">AES-256</span>
+              </div>
+            </div>
+          </div>
+          <div class="info-box">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Security Notice</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Your QR pass is AES-256 encrypted and expires after 24 hours. Do not share it with others. A new pass is auto-generated on check-in.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Room Service Orders ── -->
+    <div id="section-orders" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Room Service</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Menu -->
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px;">Menu</div>
+          <div id="guestMenuGrid" style="display:grid;gap:8px;"></div>
+        </div>
+
+        <!-- Cart -->
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px;">Your Order</div>
+          <div class="card">
+            <div id="cartItems" style="min-height:80px;margin-bottom:12px;"></div>
+            <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-weight:700;color:var(--text-primary);">
+                <span>Total</span>
+                <span id="cartTotal">₹0</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label class="form-label">Special Instructions</label>
+              <textarea id="orderNotes" class="form-control" placeholder="Allergies, preferences…" rows="2" style="resize:none;"></textarea>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="placeOrder()">Place Order</button>
+          </div>
+
+          <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-top:20px;margin-bottom:12px;">My Orders Today</div>
+          <div id="myOrders" style="display:grid;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Requests ── -->
+    <div id="section-requests" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Housekeeping & Amenity Requests</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">New Request</div>
+          <div class="form-group">
+            <label class="form-label">Request Type</label>
+            <select class="form-control" id="reqType">
+              <option value="HOUSEKEEPING">🧹 Housekeeping / Room Clean</option>
+              <option value="TOWELS">🛁 Extra Towels</option>
+              <option value="TOILETRIES">🧴 Toiletries Restock</option>
+              <option value="MINIBAR">🍫 Mini-bar Restock</option>
+              <option value="MAINTENANCE">🔧 Maintenance Issue</option>
+              <option value="LAUNDRY">👔 Laundry Service</option>
+              <option value="WAKEUP">⏰ Wake-up Call</option>
+              <option value="OTHER">📝 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Time (optional)</label>
+            <input type="time" class="form-control" id="reqTime">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" id="reqNotes" placeholder="Additional details…" rows="3" style="resize:none;"></textarea>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="submitRequest()">Submit Request</button>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-secondary);margin-bottom:12px;">My Requests</div>
+          <div id="myRequests" style="display:grid;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SECTION: Feedback ── -->
+    <div id="section-feedback" style="display:none;">
+      <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:16px;">Rate Your Stay</div>
+      <div style="max-width:600px;">
+        <div class="card" id="feedbackForm">
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:20px;">Share your experience</div>
+
+          <div id="ratingCategories" style="display:grid;gap:16px;margin-bottom:20px;"></div>
+
+          <div class="form-group">
+            <label class="form-label">Overall Comments</label>
+            <textarea class="form-control" id="feedbackComment" placeholder="Tell us about your stay…" rows="4" style="resize:none;"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Would you recommend us?</label>
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <button class="btn btn-ghost btn-sm" id="btnYes" onclick="setRecommend(true)" style="flex:1;">👍 Yes, definitely</button>
+              <button class="btn btn-ghost btn-sm" id="btnNo"  onclick="setRecommend(false)" style="flex:1;">👎 Not really</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="submitFeedback()" style="margin-top:8px;">Submit Feedback</button>
+        </div>
+        <div id="feedbackThanks" class="card hidden" style="text-align:center;padding:40px;">
+          <div style="font-size:48px;margin-bottom:16px;">🙏</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Thank You!</div>
+          <div style="color:var(--text-muted);">Your feedback helps us improve. We hope to see you again soon!</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Housekeeping Request Modal -->
+<div class="modal-overlay hidden" id="housekeepingModal">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <div class="modal-title">Request Housekeeping</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('housekeepingModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">When would you like it done?</label>
+        <select class="form-control" id="hkTime">
+          <option value="ASAP">As soon as possible</option>
+          <option value="1H">In about 1 hour</option>
+          <option value="2H">In about 2 hours</option>
+          <option value="AFTERNOON">This afternoon</option>
+          <option value="TOMORROW">Tomorrow morning</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Additional notes</label>
+        <textarea class="form-control" id="hkNotes" rows="2" placeholder="e.g. Please bring extra pillows" style="resize:none;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('housekeepingModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitHousekeeping()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+/* ── Auth guard ── */
+const user = JSON.parse(localStorage.getItem('user') || 'null');
+if (!user || !['CLIENT','MANAGER','ADMIN','FOUNDER'].includes(user.role)) {
+  window.location.href = '/login';
+}
+
+let cart = [];
+let myOrders = [];
+let myRequests = [];
+let recommend = null;
+const ratings = {};
+
+/* ── Guest stay data ── */
+const stayData = {
+  guestName: user?.name || user?.username || 'Guest',
+  room: '204',
+  roomType: 'Deluxe Room · Sea View',
+  floor: 2,
+  checkIn:  '2024-01-14',
+  checkOut: '2024-01-17',
+  nights: 3,
+  wifiPwd: 'VRGT@2024',
+};
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded', async () => {
+  const now = new Date();
+  document.getElementById('guestName').textContent = stayData.guestName;
+  document.getElementById('headerGuestName').textContent = stayData.guestName;
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+
+  // Try to load actual stay data from API
+  const res = await API.get('/api/client/my-stay');
+  if (res.success && res.data) {
+    Object.assign(stayData, res.data);
+  }
+
+  populateStay();
+  populateQR();
+  loadGuestMenu();
+  loadMyOrders();
+  loadMyRequests();
+  buildFeedbackForm();
+  connectWS();
+});
+
+function populateStay() {
+  document.getElementById('stayRoom').textContent      = stayData.room;
+  document.getElementById('stayRoomType').textContent  = stayData.roomType;
+  document.getElementById('stayFloor').textContent     = stayData.floor;
+  document.getElementById('stayCheckin').textContent   = formatDate(stayData.checkIn);
+  document.getElementById('stayCheckout').textContent  = formatDate(stayData.checkOut);
+  document.getElementById('stayNights').textContent    = stayData.nights + ' nights';
+  document.getElementById('checkoutChip').textContent  = 'Check-out: ' + formatDate(stayData.checkOut);
+  document.getElementById('wifiPwd').textContent       = stayData.wifiPwd || 'VRGT@2024';
+}
+
+function populateQR() {
+  const now = new Date();
+  const expiry = new Date(now.getTime() + 24 * 3600 * 1000);
+
+  document.getElementById('passGuestName').textContent  = stayData.guestName;
+  document.getElementById('passRoom').textContent       = stayData.room;
+  document.getElementById('passValidUntil').textContent = expiry.toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' });
+  document.getElementById('qrExpiry').textContent       = 'Expires: ' + expiry.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+
+  // Render QR via API or placeholder
+  API.get(`/api/qr/my-pass`).then(res => {
+    const container = document.getElementById('qrCodeContainer');
+    if (res.success && res.data?.qrImage) {
+      container.innerHTML = `<img src="${res.data.qrImage}" style="width:180px;height:180px;border-radius:8px;">`;
+    } else {
+      container.innerHTML = `
+        <div style="text-align:center;padding:8px;">
+          <div style="font-size:10px;color:#666;word-break:break-all;font-family:monospace;line-height:1.4;">
+            QR:${btoa(stayData.guestName + ':' + stayData.room + ':' + Date.now()).substring(0,30)}
+          </div>
+          <div style="font-size:11px;color:#999;margin-top:8px;">Encrypted AES-256</div>
+        </div>`;
+    }
+  });
+}
+
+async function regenerateQR() {
+  const res = await API.post('/api/qr/regenerate', {});
+  showToast(res.success ? 'QR pass regenerated!' : 'Regenerating QR (offline mode)');
+  populateQR();
+}
+
+/* ── Room Service ── */
+const menuData = [
+  { id:1, cat:'Breakfast', name:'Masala Dosa',     price:180, icon:'🥞', avail:true },
+  { id:2, cat:'Breakfast', name:'Egg Benedict',     price:280, icon:'🍳', avail:true },
+  { id:3, cat:'Lunch',     name:'Butter Chicken',   price:380, icon:'🍛', avail:true },
+  { id:4, cat:'Lunch',     name:'Club Sandwich',    price:290, icon:'🥪', avail:true },
+  { id:5, cat:'Anytime',   name:'Caesar Salad',     price:250, icon:'🥗', avail:true },
+  { id:6, cat:'Anytime',   name:'Mineral Water',    price:60,  icon:'💧', avail:true },
+  { id:7, cat:'Dinner',    name:'Pasta Carbonara',  price:420, icon:'🍝', avail:true },
+  { id:8, cat:'Anytime',   name:'Chocolate Cake',   price:220, icon:'🍰', avail:true },
+];
+
+function loadGuestMenu() {
+  document.getElementById('guestMenuGrid').innerHTML = menuData.filter(i => i.avail).map(item => `
+    <div class="card" style="display:flex;align-items:center;gap:12px;padding:10px 12px;">
+      <span style="font-size:24px;">${item.icon}</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;color:var(--text-primary);">${item.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${item.cat}</div>
+      </div>
+      <div style="font-weight:700;color:var(--primary-light);margin-right:8px;">₹${item.price}</div>
+      <button class="btn btn-primary btn-sm" onclick="addToCart(${item.id})">+ Add</button>
+    </div>
+  `).join('');
+  renderCart();
+}
+
+function addToCart(id) {
+  const item = menuData.find(x => x.id === id);
+  if (!item) return;
+  const existing = cart.find(x => x.id === id);
+  if (existing) { existing.qty++; }
+  else { cart.push({ ...item, qty: 1 }); }
+  renderCart();
+  showToast(item.name + ' added to order');
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(x => x.id !== id);
+  renderCart();
+}
+
+function renderCart() {
+  const cartEl = document.getElementById('cartItems');
+  if (!cart.length) {
+    cartEl.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px;">No items yet. Add from the menu.</div>';
+    document.getElementById('cartTotal').textContent = '₹0';
+    return;
+  }
+  cartEl.innerHTML = cart.map(item => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span>${item.icon}</span>
+      <div style="flex:1;font-size:13px;color:var(--text-primary);">${item.name}</div>
+      <span style="color:var(--text-muted);font-size:12px;">×${item.qty}</span>
+      <span style="font-weight:600;color:var(--primary-light);min-width:52px;text-align:right;">₹${item.price * item.qty}</span>
+      <button class="btn btn-ghost btn-sm" onclick="removeFromCart(${item.id})" style="padding:2px 6px;font-size:12px;">✕</button>
+    </div>
+  `).join('');
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  document.getElementById('cartTotal').textContent = '₹' + total;
+}
+
+async function placeOrder() {
+  if (!cart.length) { showToast('Add items to your order first'); return; }
+  const payload = {
+    roomNumber: stayData.room,
+    items: cart.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
+    notes: document.getElementById('orderNotes').value,
+    total: cart.reduce((s, i) => s + i.price * i.qty, 0),
+  };
+  const res = await API.post('/api/client/order', payload);
+  const orderId = res.success ? res.data?.orderId : 'ORD-' + Date.now();
+  myOrders.unshift({ id: orderId, items: [...cart], status: 'NEW', placedAt: new Date().toISOString(), notes: payload.notes });
+  cart = [];
+  document.getElementById('orderNotes').value = '';
+  renderCart();
+  renderMyOrders();
+  showToast('Order placed! Estimated delivery: 20–30 min');
+}
+
+function loadMyOrders() {
+  myOrders = [
+    { id: 'ORD-1042', items: [{ name:'Butter Chicken', qty:1 }], status:'DELIVERED', placedAt: new Date(Date.now()-45*60000).toISOString() },
+  ];
+  renderMyOrders();
+}
+
+function renderMyOrders() {
+  const el = document.getElementById('myOrders');
+  if (!myOrders.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">No orders yet today.</div>';
+    return;
+  }
+  const statusBadge = { NEW:'<span class="badge danger">New</span>', COOKING:'<span class="badge warning">Cooking</span>', READY:'<span class="badge info-solid">Ready</span>', DELIVERED:'<span class="badge success">Delivered</span>' };
+  el.innerHTML = myOrders.map(o => `
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text-primary);">${o.id}</span>
+        ${statusBadge[o.status] || ''}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);">${o.items.map(i => `${i.name} ×${i.qty}`).join(', ')}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${timeAgo(o.placedAt)}</div>
+    </div>
+  `).join('');
+}
+
+/* ── Requests ── */
+function loadMyRequests() {
+  myRequests = [
+    { type:'HOUSEKEEPING', status:'COMPLETED', time:'ASAP', createdAt: new Date(Date.now()-2*3600000).toISOString() },
+  ];
+  renderMyRequests();
+}
+
+async function submitRequest() {
+  const type  = document.getElementById('reqType').value;
+  const time  = document.getElementById('reqTime').value;
+  const notes = document.getElementById('reqNotes').value;
+  const res   = await API.post('/api/client/request', { type, preferredTime: time, notes, roomNumber: stayData.room });
+  myRequests.unshift({ type, status: 'PENDING', time, notes, createdAt: new Date().toISOString() });
+  document.getElementById('reqNotes').value = '';
+  renderMyRequests();
+  showToast('Request submitted! Our team will attend to it shortly.');
+}
+
+function renderMyRequests() {
+  const el = document.getElementById('myRequests');
+  if (!myRequests.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;">No requests yet.</div>';
+    return;
+  }
+  const statusBadge = { PENDING:'<span class="badge warning">Pending</span>', IN_PROGRESS:'<span class="badge info-solid">In Progress</span>', COMPLETED:'<span class="badge success">Done</span>' };
+  el.innerHTML = myRequests.map(r => `
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${r.type.replace(/_/g,' ')}</span>
+        ${statusBadge[r.status] || ''}
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);">${timeAgo(r.createdAt)}</div>
+    </div>
+  `).join('');
+}
+
+function openHousekeepingRequest() {
+  document.getElementById('housekeepingModal').classList.remove('hidden');
+}
+
+async function submitHousekeeping() {
+  const time  = document.getElementById('hkTime').value;
+  const notes = document.getElementById('hkNotes').value;
+  await API.post('/api/client/request', { type: 'HOUSEKEEPING', preferredTime: time, notes, roomNumber: stayData.room });
+  myRequests.unshift({ type:'HOUSEKEEPING', status:'PENDING', time, notes, createdAt: new Date().toISOString() });
+  renderMyRequests();
+  closeModal('housekeepingModal');
+  showToast('Housekeeping request submitted!');
+}
+
+/* ── Feedback ── */
+const feedbackCategories = ['Room Cleanliness','Food Quality','Staff Service','Amenities','Overall Experience'];
+
+function buildFeedbackForm() {
+  document.getElementById('ratingCategories').innerHTML = feedbackCategories.map(cat => `
+    <div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">${cat}</div>
+      <div style="display:flex;gap:4px;" id="stars-${cat.replace(/ /g,'-')}">
+        ${[1,2,3,4,5].map(n => `
+          <span style="font-size:28px;cursor:pointer;color:var(--border);"
+                onclick="setRating('${cat}',${n})"
+                onmouseover="hoverStars('${cat}',${n})"
+                onmouseout="resetStars('${cat}')">★</span>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function setRating(cat, val) {
+  ratings[cat] = val;
+  updateStars(cat, val, 'var(--warning)');
+}
+
+function hoverStars(cat, val) { updateStars(cat, val, 'var(--warning)'); }
+function resetStars(cat) { updateStars(cat, ratings[cat] || 0, 'var(--border)'); }
+
+function updateStars(cat, val, color) {
+  const container = document.getElementById('stars-' + cat.replace(/ /g, '-'));
+  if (!container) return;
+  container.querySelectorAll('span').forEach((star, i) => {
+    star.style.color = i < val ? color : 'var(--border)';
+  });
+}
+
+function setRecommend(val) {
+  recommend = val;
+  document.getElementById('btnYes').style.background = val  ? 'var(--success)' : '';
+  document.getElementById('btnNo').style.background  = !val ? 'var(--danger)'  : '';
+}
+
+async function submitFeedback() {
+  if (!Object.keys(ratings).length) { showToast('Please rate at least one category'); return; }
+  const payload = { ratings, comment: document.getElementById('feedbackComment').value, recommend, roomNumber: stayData.room };
+  await API.post('/api/client/feedback', payload);
+  document.getElementById('feedbackForm').classList.add('hidden');
+  document.getElementById('feedbackThanks').classList.remove('hidden');
+}
+
+/* ── Active items on My Stay page ── */
+function updateActiveItems() {
+  const all = [
+    ...myOrders.filter(o => o.status !== 'DELIVERED').map(o => ({ icon:'🍽', label: `Order ${o.id}`, status: o.status, time: o.placedAt })),
+    ...myRequests.filter(r => r.status !== 'COMPLETED').map(r => ({ icon:'🛎', label: r.type.replace(/_/g,' '), status: r.status, time: r.createdAt })),
+  ];
+  const el = document.getElementById('activeItemsList');
+  if (!all.length) {
+    el.innerHTML = '<div class="card" style="color:var(--text-muted);text-align:center;padding:24px;">No active orders or requests right now.</div>';
+    return;
+  }
+  const statusBadge = { NEW:'<span class="badge danger">New</span>', COOKING:'<span class="badge warning">Cooking</span>', READY:'<span class="badge info-solid">Ready</span>', PENDING:'<span class="badge warning">Pending</span>', IN_PROGRESS:'<span class="badge info-solid">In Progress</span>' };
+  el.innerHTML = all.map(a => `
+    <div class="card" style="display:flex;align-items:center;gap:12px;padding:10px 14px;">
+      <span style="font-size:22px;">${a.icon}</span>
+      <div style="flex:1;font-size:13px;font-weight:600;color:var(--text-primary);">${a.label}</div>
+      ${statusBadge[a.status] || ''}
+      <span style="font-size:11px;color:var(--text-muted);">${timeAgo(a.time)}</span>
+    </div>
+  `).join('');
+}
+
+/* ── WebSocket ── */
+function connectWS() {
+  try {
+    const sock = new SockJS('/ws');
+    const client = Stomp.over(sock);
+    client.debug = null;
+    client.connect({}, () => {
+      client.subscribe('/topic/notifications', msg => {
+        const evt = JSON.parse(msg.body);
+        if (evt.userId === user?.id || evt.roomNumber === stayData.room) {
+          showToast(evt.message || 'Update from hotel staff');
+          loadMyOrders();
+          loadMyRequests();
+        }
+      });
+    });
+  } catch (e) { /* WS optional */ }
+}
+
+/* ── Helpers ── */
+function showSection(name) {
+  ['stay','qr','orders','requests','feedback'].forEach(s => {
+    document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', i === ['stay','qr','orders','requests','feedback'].indexOf(name));
+  });
+  if (name === 'stay') updateActiveItems();
+}
+
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso);
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  return Math.floor(m / 60) + 'h ago';
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function showToast(msg) {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface-2);border:1px solid var(--border);' +
+    'color:var(--text-primary);padding:12px 20px;border-radius:8px;font-size:14px;z-index:9999;max-width:320px;';
+  d.textContent = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function logout() {
+  localStorage.removeItem('user');
+  window.location.href = '/login';
+}
+</script>
+</body>
+</html>
